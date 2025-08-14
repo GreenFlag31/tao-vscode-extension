@@ -9,31 +9,35 @@ import {
   INCLUDE,
   findTemplateAccordingToTheNameClicked,
   getLineTextUntilPosition,
-} from './utils.js';
-import { getInitOptions } from './init-config.js';
+} from './common-utils.js';
+import { getInitValues } from './init-config.js';
 import { log } from 'node:console';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { CompletionItemData, createCompletionItemForSyntaxInTemplate } from './provider-utils.js';
 
 // This method is called when your extension is activated
 export async function activate(context: vscode.ExtensionContext) {
-  const { extension, parse, tags, views } = await getInitOptions();
-  const { opening, closing } = tags;
-  const { exec, interpolate, raw } = parse;
-  const openingWithEvaluation = opening + exec;
-  const closingWithEvaluation = closing + exec;
-  const openingAndClosingEvaluated = `${openingWithEvaluation} ${closingWithEvaluation}`;
-
-  const openingWithInterpolate = opening + interpolate;
-  const openingAndClosingInterpolated = `${openingWithInterpolate} ${closing}`;
-
-  const openingWithRaw = opening + raw;
-  const openingAndClosingRaw = `${openingWithRaw} ${closing}`;
+  const {
+    extension,
+    closing,
+    openingAndClosingEvaluated,
+    openingAndClosingInterpolated,
+    openingAndClosingRaw,
+    openingWithEvaluation,
+    openingWithInterpolate,
+    openingWithRaw,
+    opening,
+  } = await getInitValues();
 
   const tagsProvider = vscode.languages.registerCompletionItemProvider(
     { language: extension, scheme: 'file' },
     {
       provideCompletionItems(document, position) {
         const text = getLineTextUntilPosition(document, position);
+
+        // ne pas proposer si ça ne finit pas par < ou <%
+        if (!text.match(/<%?$/)) {
+          return undefined;
+        }
 
         // ne pas proposer les tags dans un include
         if (COMPLETE_INCLUDE.test(text)) return undefined;
@@ -51,9 +55,7 @@ export async function activate(context: vscode.ExtensionContext) {
           label: openingAndClosingEvaluated,
           detail: ' Evaluation – JS execution',
         };
-        evalItem.insertText = new vscode.SnippetString(
-          openingWithEvaluation + ' ${1} ' + closingWithEvaluation
-        );
+        evalItem.insertText = new vscode.SnippetString(openingWithEvaluation + ' ${1} ' + closing);
         evalItem.documentation = 'No escape – ideal for JS execution';
         evalItem.range = replaceRange;
 
@@ -104,6 +106,133 @@ export async function activate(context: vscode.ExtensionContext) {
       },
     },
     'i'
+  );
+
+  const ifWithTagsProvider = vscode.languages.registerCompletionItemProvider(
+    { language: extension, scheme: 'file' },
+    {
+      provideCompletionItems(document, position) {
+        const insertText =
+          openingWithEvaluation +
+          ' if ( ${1} ) { ' +
+          closing +
+          '\n ${2} \n' +
+          openingWithEvaluation +
+          ' } ' +
+          closing;
+
+        const data: CompletionItemData = {
+          name: 'ifWithTags',
+          insertText,
+          label: {
+            label: 'if',
+            detail: ' condition with tags',
+            description: 'TAO',
+          },
+          documentation: 'Insert an If condition with tags',
+        };
+
+        return createCompletionItemForSyntaxInTemplate(data);
+      },
+    },
+    'ifWithTags'
+  );
+
+  const forWithTagsProvider = vscode.languages.registerCompletionItemProvider(
+    { language: extension, scheme: 'file' },
+    {
+      provideCompletionItems(document, position) {
+        const insertTextFor =
+          openingWithEvaluation +
+          ' for (let ${1:index} = 0; ${1} < ${2:array}.length; ${1}++) { ' +
+          closing +
+          '\n  const ${3:element} = ${2}[${1}];\n' +
+          '  ${4}\n' +
+          openingWithEvaluation +
+          ' } ' +
+          closing;
+
+        const fordata: CompletionItemData = {
+          name: 'forWithTags',
+          insertText: insertTextFor,
+          label: {
+            label: 'for',
+            detail: ' loop with tags',
+            description: 'TAO',
+          },
+          documentation: 'Insert a For loop with tags',
+        };
+
+        const forCompletionItem = createCompletionItemForSyntaxInTemplate(fordata);
+
+        return forCompletionItem;
+      },
+    },
+    'forWithTags'
+  );
+
+  const forInWithTagsProvider = vscode.languages.registerCompletionItemProvider(
+    { language: extension, scheme: 'file' },
+    {
+      provideCompletionItems(document, position) {
+        const insertTextforIn =
+          openingWithEvaluation +
+          ' for (const ${1:key} in ${2:object}) { ' +
+          closing +
+          '\n  if (${2}.hasOwnProperty(${1})) {\n' +
+          '    ${3}\n' +
+          '  }\n' +
+          openingWithEvaluation +
+          ' } ' +
+          closing;
+
+        const dataForIn: CompletionItemData = {
+          name: 'forInWithTags',
+          insertText: insertTextforIn,
+          label: {
+            label: 'for...in',
+            detail: ' loop with tags',
+            description: 'TAO',
+          },
+          documentation: 'Insert a For...in loop with tags',
+        };
+
+        const forInCompletionItem = createCompletionItemForSyntaxInTemplate(dataForIn);
+
+        return forInCompletionItem;
+      },
+    },
+    'forInWithTags'
+  );
+
+  const forOfWithTagsProvider = vscode.languages.registerCompletionItemProvider(
+    { language: extension, scheme: 'file' },
+    {
+      provideCompletionItems(document, position) {
+        const insertText =
+          openingWithEvaluation +
+          ' for (const ${1:element} of ${2:array}) { ' +
+          closing +
+          '\n  ${3}\n' +
+          openingWithEvaluation +
+          ' } ' +
+          closing;
+
+        const data: CompletionItemData = {
+          name: 'forOfWithTags',
+          insertText,
+          label: {
+            label: 'for...of',
+            detail: ' loop with tags',
+            description: 'TAO',
+          },
+          documentation: 'Insert a For...of loop with tags',
+        };
+
+        return createCompletionItemForSyntaxInTemplate(data);
+      },
+    },
+    'forOfWithTags'
   );
 
   const signatureProvider = vscode.languages.registerSignatureHelpProvider(
@@ -169,23 +298,19 @@ export async function activate(context: vscode.ExtensionContext) {
     '`'
   );
 
-  const fileLinkProvider = vscode.languages.registerDefinitionProvider([extension], {
+  const templateLinkProvider = vscode.languages.registerDefinitionProvider([extension], {
     provideDefinition(document, position) {
-      const wordRange = document.getWordRangeAtPosition(position, /"([^"]+)"/);
+      const wordRange = document.getWordRangeAtPosition(position, /["'`]([^"'`]+)["'`]/);
       if (!wordRange) return;
 
-      const word = document.getText(wordRange).replace(/['"]/g, '');
-      log(word);
+      const word = document.getText(wordRange).replace(/['"`]/g, '');
 
       const reference = findTemplateAccordingToTheNameClicked(completeTemplatesReferences, word);
 
-      log(reference);
+      log('word: ', word, 'and reference : ', reference);
       if (!reference) return undefined;
 
-      const filePath = pathToFileURL(reference).href;
-
-      // +test
-      return new vscode.Location(vscode.Uri.file(filePath), new vscode.Position(0, 0));
+      return new vscode.Location(vscode.Uri.file(reference), new vscode.Position(0, 0));
     },
   });
 
@@ -194,7 +319,11 @@ export async function activate(context: vscode.ExtensionContext) {
     tagsProvider,
     signatureProvider,
     templatesNameProvider,
-    fileLinkProvider
+    templateLinkProvider,
+    ifWithTagsProvider,
+    forOfWithTagsProvider,
+    forInWithTagsProvider,
+    forWithTagsProvider
   );
 }
 

@@ -21,6 +21,16 @@
         "command": "node-tao.helloWorld",
         "title": "Hello World"
       }
+    ],
+    "grammars": [
+      {
+        "language": "html",
+        "scopeName": "text.html.tao",
+        "path": "./src/tao.tmLanguage.json",
+        "injectTo": [
+          "text.html.basic"
+        ]
+      }
     ]
   },
   "scripts": {

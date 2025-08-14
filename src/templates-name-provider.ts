@@ -1,7 +1,5 @@
 import * as vscode from 'vscode';
-import { getLineTextUntilPosition } from './utils.js';
-import { log } from 'console';
-import { pathToFileURL } from 'url';
+import { getLineTextUntilPosition } from './common-utils.js';
 
 // Watcher pour actualiser si des fichiers HTML sont ajoutés/supprimés
 // const watcher = vscode.workspace.createFileSystemWatcher('**/*.html');
@@ -34,11 +32,10 @@ async function getTemplatesFiles(extension: string) {
   const templates = await vscode.workspace.findFiles(`**/*.${extension}`, '**/node_modules/**');
 
   for (const template of templates) {
-    const { path, fsPath } = template;
+    const { path } = template;
     const templateName = getFileName(path);
     templatesNames.push(templateName);
 
-    const completePath = pathToFileURL(fsPath).href;
     completeTemplatesReferences.push(path);
   }
 

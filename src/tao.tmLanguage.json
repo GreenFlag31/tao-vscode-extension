@@ -1,0 +1,13 @@
+{
+  "scopeName": "text.html.tao",
+  "patterns": [
+    {
+      "name": "keyword.control.tao",
+      "match": "<%[=~]?"
+    },
+    {
+      "name": "keyword.control.tao",
+      "match": "%>"
+    }
+  ]
+}

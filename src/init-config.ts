@@ -50,4 +50,30 @@ function isAValidConfiguration(optionsProvided: Options): boolean {
   return true;
 }
 
-export { getInitOptions };
+async function getInitValues() {
+  const { extension, parse, tags, views } = await getInitOptions();
+  const { opening, closing } = tags;
+  const { exec, interpolate, raw } = parse;
+  const openingWithEvaluation = opening + exec;
+  const openingAndClosingEvaluated = `${openingWithEvaluation} ${closing}`;
+
+  const openingWithInterpolate = opening + interpolate;
+  const openingAndClosingInterpolated = `${openingWithInterpolate} ${closing}`;
+
+  const openingWithRaw = opening + raw;
+  const openingAndClosingRaw = `${openingWithRaw} ${closing}`;
+
+  return {
+    openingAndClosingEvaluated,
+    openingAndClosingInterpolated,
+    openingAndClosingRaw,
+    closing,
+    extension,
+    openingWithEvaluation,
+    openingWithInterpolate,
+    openingWithRaw,
+    opening,
+  };
+}
+
+export { getInitOptions, getInitValues };

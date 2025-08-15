@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import {
   excludeCurrentFileFromTemplatePropositions,
+  getFileName,
   getTemplatesFiles,
   isInFirstIncludeArgument,
 } from './templates-name-provider.js';
@@ -8,11 +9,13 @@ import {
   COMPLETE_INCLUDE,
   INCLUDE,
   findTemplateAccordingToTheNameClicked,
+  getCurrentInjectedVariables,
+  getInjectedUserData,
   getLineTextUntilPosition,
 } from './common-utils.js';
 import { getInitValues } from './init-config.js';
 import { log } from 'node:console';
-import { CompletionItemData, createCompletionItemForSyntaxInTemplate } from './provider-utils.js';
+import { CompletionItemSnippetData, createCompletionItemSnippet } from './provider-utils.js';
 
 // This method is called when your extension is activated
 export async function activate(context: vscode.ExtensionContext) {
@@ -27,6 +30,8 @@ export async function activate(context: vscode.ExtensionContext) {
     openingWithRaw,
     opening,
   } = await getInitValues();
+  const injectedUserData = await getInjectedUserData();
+  log(injectedUserData);
 
   const tagsProvider = vscode.languages.registerCompletionItemProvider(
     { language: extension, scheme: 'file' },
@@ -34,55 +39,58 @@ export async function activate(context: vscode.ExtensionContext) {
       provideCompletionItems(document, position) {
         const text = getLineTextUntilPosition(document, position);
 
-        // ne pas proposer si ça ne finit pas par < ou <%
-        if (!text.match(/<%?$/)) {
-          return undefined;
-        }
+        // do not suggest if it does not end with < or <%
+        if (!text.match(/<%?$/)) return undefined;
 
-        // ne pas proposer les tags dans un include
+        // do not suggest tags inside an include
         if (COMPLETE_INCLUDE.test(text)) return undefined;
 
         const match = text.match(/<%?$/);
         const replaceRange = match
           ? new vscode.Range(position.translate(0, -match[0].length), position)
-          : new vscode.Range(position, position); // fallback
+          : new vscode.Range(position, position);
 
-        const evalItem = new vscode.CompletionItem(
-          openingAndClosingEvaluated,
-          vscode.CompletionItemKind.Snippet
-        );
-        evalItem.label = {
-          label: openingAndClosingEvaluated,
-          detail: ' Evaluation – JS execution',
+        const evalItemData: CompletionItemSnippetData = {
+          name: openingAndClosingEvaluated,
+          insertText: openingWithEvaluation + ' ${1} ' + closing,
+          label: {
+            label: openingAndClosingEvaluated,
+            detail: ' Evaluation – JS execution',
+            description: 'TAO',
+          },
+          documentation: 'Insert an evaluation tag',
+          range: replaceRange,
+          itemKind: vscode.CompletionItemKind.Snippet,
         };
-        evalItem.insertText = new vscode.SnippetString(openingWithEvaluation + ' ${1} ' + closing);
-        evalItem.documentation = 'No escape – ideal for JS execution';
-        evalItem.range = replaceRange;
 
-        const interpItem = new vscode.CompletionItem(
-          openingAndClosingInterpolated,
-          vscode.CompletionItemKind.Snippet
-        );
-        interpItem.label = {
-          label: openingAndClosingInterpolated,
-          detail: ' Interpolation – escaped output',
+        const interpolationItemData: CompletionItemSnippetData = {
+          name: openingAndClosingInterpolated,
+          insertText: openingWithInterpolate + ' ${1} ' + closing,
+          label: {
+            label: openingAndClosingInterpolated,
+            detail: ' Interpolation – escaped output',
+            description: 'TAO',
+          },
+          documentation: 'Insert an interpolation tag',
+          range: replaceRange,
+          itemKind: vscode.CompletionItemKind.Snippet,
         };
-        interpItem.insertText = new vscode.SnippetString(
-          openingWithInterpolate + ' ${1} ' + closing
-        );
-        interpItem.documentation = 'Escaped output – ideal for data interpolation';
-        interpItem.range = replaceRange;
 
-        const rawItem = new vscode.CompletionItem(
-          openingAndClosingRaw,
-          vscode.CompletionItemKind.Snippet
-        );
-        rawItem.label = { label: openingAndClosingRaw, detail: ' Raw – unescaped HTML' };
-        rawItem.insertText = new vscode.SnippetString(openingWithRaw + ' ${1} ' + closing);
-        rawItem.documentation = 'No escape – ideal for raw HTML inclusion';
-        rawItem.range = replaceRange;
+        const rawItemData: CompletionItemSnippetData = {
+          name: openingAndClosingRaw,
+          insertText: openingWithRaw + ' ${1} ' + closing,
+          label: {
+            label: openingAndClosingRaw,
+            detail: ' Raw – unescaped HTML',
+            description: 'TAO',
+          },
+          documentation: 'Insert an raw tag',
+          range: replaceRange,
+          itemKind: vscode.CompletionItemKind.Snippet,
+        };
 
-        return [evalItem, interpItem, rawItem];
+        const items = createCompletionItemSnippet(evalItemData, interpolationItemData, rawItemData);
+        return items;
       },
     },
     ...opening.split('')
@@ -97,12 +105,21 @@ export async function activate(context: vscode.ExtensionContext) {
         // ne pas proposer un include dans un include
         if (COMPLETE_INCLUDE.test(text)) return undefined;
 
-        const item = new vscode.CompletionItem('include', vscode.CompletionItemKind.Function);
-        item.detail = 'Tao template include function';
-        item.documentation = 'Includes a child template with optional data and helpers.';
-        item.insertText = new vscode.SnippetString('include("${1:template}", {${2}}, {${3}})');
+        const includeItemData: CompletionItemSnippetData = {
+          name: 'include',
+          insertText: 'include("${1:template}", {${2}}, {${3}})',
+          label: {
+            label: 'include',
+            detail: ' Tao template include function',
+            description: 'TAO',
+          },
+          documentation: 'Insert an include function',
+          itemKind: vscode.CompletionItemKind.Function,
+        };
 
-        return [item];
+        const include = createCompletionItemSnippet(includeItemData);
+
+        return include;
       },
     },
     'i'
@@ -121,7 +138,7 @@ export async function activate(context: vscode.ExtensionContext) {
           ' } ' +
           closing;
 
-        const data: CompletionItemData = {
+        const data: CompletionItemSnippetData = {
           name: 'ifWithTags',
           insertText,
           label: {
@@ -130,12 +147,72 @@ export async function activate(context: vscode.ExtensionContext) {
             description: 'TAO',
           },
           documentation: 'Insert an If condition with tags',
+          itemKind: vscode.CompletionItemKind.Snippet,
         };
 
-        return createCompletionItemForSyntaxInTemplate(data);
+        return createCompletionItemSnippet(data);
       },
     },
     'ifWithTags'
+  );
+
+  const injectedUserDataProvider = vscode.languages.registerCompletionItemProvider(
+    { language: extension, scheme: 'file' },
+    {
+      provideCompletionItems(document, position) {
+        const templateName = getFileName(document.fileName);
+
+        const currentData = getCurrentInjectedVariables(injectedUserData, templateName);
+
+        if (!currentData) return;
+
+        // itérer sur tts les variables, helpers
+        const { variables, helpers } = currentData;
+        const variablesAndHelpers: vscode.CompletionItem[] = [];
+
+        for (const variable of variables) {
+          log('available variable', variable);
+
+          const data: CompletionItemSnippetData = {
+            name: variable,
+            insertText: variable,
+            label: {
+              label: variable,
+              detail: ` injected template variable (${typeof variable})`,
+              description: 'TAO',
+            },
+            documentation: 'Local template variable',
+            itemKind: vscode.CompletionItemKind.Variable,
+          };
+
+          const item = createCompletionItemSnippet(data);
+          variablesAndHelpers.push(...item);
+        }
+
+        for (const helper of helpers) {
+          log('available helper', helper);
+
+          const data: CompletionItemSnippetData = {
+            name: helper,
+            insertText: helper,
+            label: {
+              label: helper,
+              detail: ` injected template helper function`,
+              description: 'TAO',
+            },
+            documentation: 'Template helper',
+            itemKind: vscode.CompletionItemKind.Function,
+          };
+
+          const item = createCompletionItemSnippet(data);
+          variablesAndHelpers.push(...item);
+        }
+
+        return variablesAndHelpers;
+      },
+    },
+    // all letters as triggers
+    'azertyuiopqsdfghjklmwxcvbn'
   );
 
   const forWithTagsProvider = vscode.languages.registerCompletionItemProvider(
@@ -152,7 +229,7 @@ export async function activate(context: vscode.ExtensionContext) {
           ' } ' +
           closing;
 
-        const fordata: CompletionItemData = {
+        const fordata: CompletionItemSnippetData = {
           name: 'forWithTags',
           insertText: insertTextFor,
           label: {
@@ -161,9 +238,10 @@ export async function activate(context: vscode.ExtensionContext) {
             description: 'TAO',
           },
           documentation: 'Insert a For loop with tags',
+          itemKind: vscode.CompletionItemKind.Snippet,
         };
 
-        const forCompletionItem = createCompletionItemForSyntaxInTemplate(fordata);
+        const forCompletionItem = createCompletionItemSnippet(fordata);
 
         return forCompletionItem;
       },
@@ -186,7 +264,7 @@ export async function activate(context: vscode.ExtensionContext) {
           ' } ' +
           closing;
 
-        const dataForIn: CompletionItemData = {
+        const dataForIn: CompletionItemSnippetData = {
           name: 'forInWithTags',
           insertText: insertTextforIn,
           label: {
@@ -195,9 +273,10 @@ export async function activate(context: vscode.ExtensionContext) {
             description: 'TAO',
           },
           documentation: 'Insert a For...in loop with tags',
+          itemKind: vscode.CompletionItemKind.Snippet,
         };
 
-        const forInCompletionItem = createCompletionItemForSyntaxInTemplate(dataForIn);
+        const forInCompletionItem = createCompletionItemSnippet(dataForIn);
 
         return forInCompletionItem;
       },
@@ -218,7 +297,7 @@ export async function activate(context: vscode.ExtensionContext) {
           ' } ' +
           closing;
 
-        const data: CompletionItemData = {
+        const data: CompletionItemSnippetData = {
           name: 'forOfWithTags',
           insertText,
           label: {
@@ -227,9 +306,10 @@ export async function activate(context: vscode.ExtensionContext) {
             description: 'TAO',
           },
           documentation: 'Insert a For...of loop with tags',
+          itemKind: vscode.CompletionItemKind.Snippet,
         };
 
-        return createCompletionItemForSyntaxInTemplate(data);
+        return createCompletionItemSnippet(data);
       },
     },
     'forOfWithTags'
@@ -323,7 +403,8 @@ export async function activate(context: vscode.ExtensionContext) {
     ifWithTagsProvider,
     forOfWithTagsProvider,
     forInWithTagsProvider,
-    forWithTagsProvider
+    forWithTagsProvider,
+    injectedUserDataProvider
   );
 }
 

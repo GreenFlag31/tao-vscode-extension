@@ -48,3 +48,9 @@ export interface Parse {
    */
   raw: string;
 }
+
+export interface UserData {
+  template: string;
+  helpers: string[];
+  variables: string[];
+}

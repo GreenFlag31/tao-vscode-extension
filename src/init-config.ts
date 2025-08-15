@@ -11,6 +11,8 @@ async function getInitOptions(): Promise<Options> {
     return DEFAULT_OPTIONS;
   }
 
+  // nécessaire?? prendre le path
+  // ou remplacer par plus robuste ?? uri.fsPath
   const configPath = pathToFileURL(options[0].fsPath).href;
   const optionsParsed = await import(configPath);
   const configuration = optionsParsed.default;

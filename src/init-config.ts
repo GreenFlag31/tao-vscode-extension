@@ -4,7 +4,7 @@ import { DEFAULT_OPTIONS } from './const.js';
 import { Options } from './interfaces.js';
 
 async function getInitOptions(): Promise<Options> {
-  const options = await vscode.workspace.findFiles('**/tao.config.js');
+  const options = await vscode.workspace.findFiles('**/tao.config.js', '**/node_modules/**');
   if (options.length === 0) return DEFAULT_OPTIONS;
   if (options.length > 1) {
     vscode.window.showWarningMessage('Multiple TAO configuration files found');

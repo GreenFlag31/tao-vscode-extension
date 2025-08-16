@@ -1,4 +1,3 @@
-import { log } from 'console';
 import path from 'path';
 import * as vscode from 'vscode';
 import { readFile } from 'fs/promises';
@@ -15,24 +14,45 @@ function getLineTextUntilPosition(document: vscode.TextDocument, position: vscod
   return textBeforeCursor;
 }
 
-function findTemplateAccordingToTheNameClicked(
-  completeTemplatesReferences: string[],
-  word: string
-) {
-  const getTemplateReference = completeTemplatesReferences.find((reference) =>
-    reference.endsWith(word)
-  );
+function isInFirstIncludeArgument(
+  document: vscode.TextDocument,
+  position: vscode.Position
+): boolean {
+  const text = getLineTextUntilPosition(document, position);
+  return /include\(\s*["'][^"']*$/.test(text);
+}
 
-  return getTemplateReference;
+function transformTemplatesNamesToCompletionItems(templates: string[]) {
+  const completionTemplateItems: vscode.CompletionItem[] = [];
+
+  for (const template of templates) {
+    const item = new vscode.CompletionItem(template, vscode.CompletionItemKind.File);
+    item.insertText = template;
+    item.detail = ' available template';
+    item.documentation = 'TAO';
+    completionTemplateItems.push(item);
+  }
+
+  return completionTemplateItems;
+}
+
+function findTemplateAccordingToTheNameClicked(completeTemplatesPath: string[], word: string) {
+  const getTemplatePath = completeTemplatesPath.find((path) => path.endsWith(word));
+
+  return getTemplatePath;
+}
+
+function getInjectedUserDataPath() {
+  return path.join(
+    vscode.workspace.workspaceFolders![0].uri.fsPath,
+    '.vscode',
+    'tao-user-data.json'
+  );
 }
 
 async function getInjectedUserData(): Promise<UserData[] | undefined> {
   try {
-    const filePath = path.join(
-      vscode.workspace.workspaceFolders![0].uri.fsPath,
-      '.vscode',
-      'tao-user-data.json'
-    );
+    const filePath = getInjectedUserDataPath();
     const content = await readFile(filePath, 'utf-8');
     const userData = JSON.parse(content);
     const dataIsValid = validateInjectedUserData(userData);
@@ -54,6 +74,17 @@ function getCurrentInjectedVariables(userDatas: UserData[] = [], templateName: s
   return userDatas.find((data) => data.template === templateName);
 }
 
+function normalizeWindowsPath(path: string) {
+  return path.replace(/\\/g, '/');
+}
+
+/**
+ * Get the name of the file with windows path normalization.
+ */
+function getFileName(file: string) {
+  return normalizeWindowsPath(file).split('/').at(-1) || '';
+}
+
 export {
   getLineTextUntilPosition,
   INCLUDE,
@@ -61,4 +92,9 @@ export {
   findTemplateAccordingToTheNameClicked,
   getInjectedUserData,
   getCurrentInjectedVariables,
+  isInFirstIncludeArgument,
+  transformTemplatesNamesToCompletionItems,
+  getInjectedUserDataPath,
+  getFileName,
+  normalizeWindowsPath,
 };

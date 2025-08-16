@@ -1,17 +1,20 @@
 import * as vscode from 'vscode';
 import {
+  completeTemplatesPath,
+  createTemplatesFilesWatcher,
   excludeCurrentFileFromTemplatePropositions,
-  getFileName,
   getTemplatesFiles,
-  isInFirstIncludeArgument,
 } from './templates-name-provider.js';
 import {
   COMPLETE_INCLUDE,
   INCLUDE,
   findTemplateAccordingToTheNameClicked,
   getCurrentInjectedVariables,
+  getFileName,
   getInjectedUserData,
   getLineTextUntilPosition,
+  isInFirstIncludeArgument,
+  transformTemplatesNamesToCompletionItems,
 } from './common-utils.js';
 import { getInitValues } from './init-config.js';
 import { log } from 'node:console';
@@ -30,8 +33,9 @@ export async function activate(context: vscode.ExtensionContext) {
     openingWithRaw,
     opening,
   } = await getInitValues();
+  // a faire à chaque ouverture de fichier / modification ?
   const injectedUserData = await getInjectedUserData();
-  log(injectedUserData);
+  // log(injectedUserData);
 
   const tagsProvider = vscode.languages.registerCompletionItemProvider(
     { language: extension, scheme: 'file' },
@@ -166,13 +170,10 @@ export async function activate(context: vscode.ExtensionContext) {
 
         if (!currentData) return;
 
-        // itérer sur tts les variables, helpers
         const { variables, helpers } = currentData;
         const variablesAndHelpers: vscode.CompletionItem[] = [];
 
         for (const variable of variables) {
-          log('available variable', variable);
-
           const data: CompletionItemSnippetData = {
             name: variable,
             insertText: variable,
@@ -190,8 +191,6 @@ export async function activate(context: vscode.ExtensionContext) {
         }
 
         for (const helper of helpers) {
-          log('available helper', helper);
-
           const data: CompletionItemSnippetData = {
             name: helper,
             insertText: helper,
@@ -357,8 +356,8 @@ export async function activate(context: vscode.ExtensionContext) {
     ','
   );
 
-  const { templatesFiles, completeTemplatesReferences } = await getTemplatesFiles(extension);
-  // log(completeTemplatesReferences);
+  await getTemplatesFiles(extension);
+  const templatesFilesWatcher = createTemplatesFilesWatcher(extension);
 
   const templatesNameProvider = vscode.languages.registerCompletionItemProvider(
     { language: extension, scheme: 'file' },
@@ -366,11 +365,13 @@ export async function activate(context: vscode.ExtensionContext) {
       provideCompletionItems(document, position) {
         if (!isInFirstIncludeArgument(document, position)) return undefined;
         const templates = excludeCurrentFileFromTemplatePropositions(
-          templatesFiles,
+          completeTemplatesPath,
           document.fileName
         );
 
-        return templates;
+        const remainingTemplates = transformTemplatesNamesToCompletionItems(templates);
+
+        return remainingTemplates;
       },
     },
     '"',
@@ -385,12 +386,34 @@ export async function activate(context: vscode.ExtensionContext) {
 
       const word = document.getText(wordRange).replace(/['"`]/g, '');
 
-      const reference = findTemplateAccordingToTheNameClicked(completeTemplatesReferences, word);
+      const completeTemplatePath = findTemplateAccordingToTheNameClicked(
+        completeTemplatesPath,
+        word
+      );
 
-      log('word: ', word, 'and reference : ', reference);
-      if (!reference) return undefined;
+      log('word: ', word, 'and reference : ', completeTemplatePath);
+      if (!completeTemplatePath) return undefined;
 
-      return new vscode.Location(vscode.Uri.file(reference), new vscode.Position(0, 0));
+      return new vscode.Location(vscode.Uri.file(completeTemplatePath), new vscode.Position(0, 0));
+    },
+  });
+
+  const hoverProvider = vscode.languages.registerHoverProvider(extension, {
+    provideHover(document, position) {
+      const wordRange = document.getWordRangeAtPosition(position, /["'`]([^"'`]+)["'`]/);
+      if (!wordRange) return;
+
+      const word = document.getText(wordRange).replace(/['"`]/g, '');
+
+      const template = completeTemplatesPath.find((template) => template.endsWith(word));
+
+      if (!template) return;
+
+      return new vscode.Hover(
+        new vscode.MarkdownString(
+          `Child template to be included inside this template.  \n\n📂 Location: \`${template}\``
+        )
+      );
     },
   });
 
@@ -404,7 +427,9 @@ export async function activate(context: vscode.ExtensionContext) {
     forOfWithTagsProvider,
     forInWithTagsProvider,
     forWithTagsProvider,
-    injectedUserDataProvider
+    injectedUserDataProvider,
+    templatesFilesWatcher,
+    hoverProvider
   );
 }
 

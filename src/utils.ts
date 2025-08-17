@@ -1,22 +1,23 @@
 import * as vscode from 'vscode';
+import { CompletionItemSnippetData } from './interfaces.js';
 
-export interface CompletionItemSnippetData {
-  name: string;
-  label: {
-    label: string;
-    detail: string;
-    description: string;
-  };
-  insertText: string;
-  documentation: string | vscode.MarkdownString;
-  range?: vscode.Range;
-  itemKind: ItemKind;
+function getLineTextUntilPosition(document: vscode.TextDocument, position: vscode.Position) {
+  const lineText = document.lineAt(position.line).text;
+  const textBeforeCursor = lineText.substring(0, position.character);
+
+  return textBeforeCursor;
 }
 
-export type ItemKind =
-  | vscode.CompletionItemKind.Snippet
-  | vscode.CompletionItemKind.Function
-  | vscode.CompletionItemKind.Variable;
+function normalizeWindowsPath(path: string) {
+  return path.replace(/\\/g, '/');
+}
+
+/**
+ * Get the name of the file with windows path normalization.
+ */
+function getFileName(file: string) {
+  return normalizeWindowsPath(file).split('/').at(-1) || '';
+}
 
 function createCompletionItemSnippet(...completionItems: CompletionItemSnippetData[]) {
   const itemsCollection: vscode.CompletionItem[] = [];
@@ -36,4 +37,4 @@ function createCompletionItemSnippet(...completionItems: CompletionItemSnippetDa
   return itemsCollection;
 }
 
-export { createCompletionItemSnippet };
+export { getLineTextUntilPosition, getFileName, normalizeWindowsPath, createCompletionItemSnippet };

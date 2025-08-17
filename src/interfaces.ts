@@ -1,3 +1,5 @@
+import * as vscode from 'vscode';
+
 export interface Options {
   /**
    * The directory containing your template files.
@@ -54,3 +56,33 @@ export interface UserData {
   helpers: string[];
   variables: string[];
 }
+
+export interface InitValues {
+  openingAndClosingEvaluated: string;
+  openingAndClosingInterpolated: string;
+  openingAndClosingRaw: string;
+  closing: string;
+  extension: string;
+  openingWithEvaluation: string;
+  openingWithInterpolate: string;
+  openingWithRaw: string;
+  opening: string;
+}
+
+export interface CompletionItemSnippetData {
+  name: string;
+  label: {
+    label: string;
+    detail: string;
+    description: string;
+  };
+  insertText: string;
+  documentation: string | vscode.MarkdownString;
+  range?: vscode.Range;
+  itemKind: ItemKind;
+}
+
+export type ItemKind =
+  | vscode.CompletionItemKind.Snippet
+  | vscode.CompletionItemKind.Function
+  | vscode.CompletionItemKind.Variable;

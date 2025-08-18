@@ -4,7 +4,7 @@ export interface Options {
   /**
    * The directory containing your template files.
    */
-  views: string;
+  // views: string;
   /**
    * Exec, interpolate, and raw configuration.
    */

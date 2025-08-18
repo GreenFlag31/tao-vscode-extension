@@ -10,6 +10,7 @@ import {
 import { getInjectedUserDataProvider } from './user-data/providers.js';
 import {
   getForInWithTagsProvider,
+  getForOfWithTagsProvider,
   getForWithTagsProvider,
   getIfWithTagsProvider,
   getTagsProvider,
@@ -46,7 +47,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
   const forInWithTagsProvider = getForInWithTagsProvider(values);
 
-  const forOfWithTagsProvider = getForInWithTagsProvider(values);
+  const forOfWithTagsProvider = getForOfWithTagsProvider(values);
 
   const signatureProvider = getSignatureProvider(values);
 

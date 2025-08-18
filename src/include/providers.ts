@@ -1,7 +1,11 @@
 import * as vscode from 'vscode';
-import { createCompletionItemSnippet, getLineTextUntilPosition } from '../utils.js';
+import {
+  createCompletionItemSnippet,
+  getLineTextUntilPosition,
+  isCursorInsideCompletionItem,
+} from '../utils.js';
 import { CompletionItemSnippetData, InitValues } from '../interfaces.js';
-import { COMPLETE_INCLUDE, INCLUDE } from '../config/const.js';
+import { INCLUDE, WHOLE_INCLUDE } from '../config/const.js';
 
 function getIncludeProvider(values: InitValues) {
   const { extension } = values;
@@ -10,10 +14,8 @@ function getIncludeProvider(values: InitValues) {
     { language: extension, scheme: 'file' },
     {
       provideCompletionItems(document, position) {
-        const text = getLineTextUntilPosition(document, position);
-
-        // ne pas proposer un include dans un include
-        if (COMPLETE_INCLUDE.test(text)) return undefined;
+        // ne pas proposer si curseur est dans l'include
+        if (isCursorInsideCompletionItem(document, position, WHOLE_INCLUDE)) return undefined;
 
         const includeItemData: CompletionItemSnippetData = {
           name: 'include',

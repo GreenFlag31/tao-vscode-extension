@@ -1,5 +1,7 @@
 import * as vscode from 'vscode';
 import { CompletionItemSnippetData } from './interfaces.js';
+import { WHOLE_INCLUDE } from './config/const.js';
+import { log } from 'console';
 
 function getLineTextUntilPosition(document: vscode.TextDocument, position: vscode.Position) {
   const lineText = document.lineAt(position.line).text;
@@ -37,4 +39,39 @@ function createCompletionItemSnippet(...completionItems: CompletionItemSnippetDa
   return itemsCollection;
 }
 
-export { getLineTextUntilPosition, getFileName, normalizeWindowsPath, createCompletionItemSnippet };
+/**
+ * Do NOT suggest an item provider if cursor inside item.
+ * Tested through item regex.
+ */
+function isCursorInsideCompletionItem(
+  document: vscode.TextDocument,
+  position: vscode.Position,
+  regex: RegExp
+) {
+  const lineText = document.lineAt(position.line).text;
+  const cursor = position.character;
+  const indices = regex.exec(lineText)?.indices?.[0];
+  if (!indices) return false;
+
+  const [start, end] = indices;
+  log(cursor, start, end);
+  // exclusive end index
+  return cursor >= start && cursor < end;
+}
+
+/**
+ * Escape special regular expression characters inside a string
+ */
+function escapeRegExp(string: string) {
+  // $& means the whole matched string
+  return string.replace(/[.*+\-?^${}()|[\]\\]/g, '\\$&');
+}
+
+export {
+  getLineTextUntilPosition,
+  getFileName,
+  normalizeWindowsPath,
+  createCompletionItemSnippet,
+  isCursorInsideCompletionItem,
+  escapeRegExp,
+};

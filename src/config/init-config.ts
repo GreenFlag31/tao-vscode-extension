@@ -68,7 +68,7 @@ function isAValidConfiguration(optionsProvided: Options): optionsProvided is Opt
 }
 
 async function getInitValues() {
-  const { extension, parse, tags, views } = await getInitOptions();
+  const { extension, parse, tags } = await getInitOptions();
   const { opening, closing } = tags;
   const { exec, interpolate, raw } = parse;
 

@@ -1,7 +1,11 @@
 import * as vscode from 'vscode';
-import { createCompletionItemSnippet, getLineTextUntilPosition } from '../utils.js';
+import {
+  createCompletionItemSnippet,
+  getLineTextUntilPosition,
+  isCursorInsideCompletionItem,
+} from '../utils.js';
 import { CompletionItemSnippetData, InitValues } from '../interfaces.js';
-import { COMPLETE_INCLUDE } from '../config/const.js';
+import { WHOLE_INCLUDE } from '../config/const.js';
 
 function getTagsProvider(values: InitValues) {
   const {
@@ -22,11 +26,13 @@ function getTagsProvider(values: InitValues) {
       provideCompletionItems(document, position) {
         const text = getLineTextUntilPosition(document, position);
 
-        // do not suggest if it does not end with < or <%
-        if (!text.match(/<%?$/)) return undefined;
+        // ne pas proposer si dans un tag
+        // +
 
-        // do not suggest tags inside an include
-        if (COMPLETE_INCLUDE.test(text)) return undefined;
+        // ne pas proposer si curseur est dans l'include
+        if (isCursorInsideCompletionItem(document, position, WHOLE_INCLUDE)) {
+          return undefined;
+        }
 
         const match = text.match(/<%?$/);
         const replaceRange = match

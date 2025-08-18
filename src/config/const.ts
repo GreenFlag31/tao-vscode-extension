@@ -1,4 +1,4 @@
-import { Options } from './interfaces.js';
+import { Options } from '../interfaces.js';
 
 const DEFAULT_EXTENSION = 'html';
 const DEFAULT_OPENING = '<%';
@@ -21,11 +21,13 @@ const DEFAULT_OPTIONS: Options = {
     opening: DEFAULT_OPENING,
     closing: DEFAULT_CLOSING,
   },
-  views: DEFAULT_VIEWS,
+  // views: DEFAULT_VIEWS,
 };
 
-const INCLUDE = /include\(['"]?.*['"]?.*,?/;
-const COMPLETE_INCLUDE = /include\(['"]?.*['"]?.*[^)]?$/;
+const INCLUDE = /include\(['"`]?.*['"`]?.*,?/;
+const COMPLETE_INCLUDE = /include\(['"`]?.*['"`]?.*[^)]?$/;
+const WHOLE_INCLUDE = /include\([^)]*\)?/d;
+const TAG = /<%?$/;
 
 export {
   DEFAULT_CLOSING,
@@ -38,4 +40,5 @@ export {
   DEFAULT_VIEWS,
   INCLUDE,
   COMPLETE_INCLUDE,
+  WHOLE_INCLUDE,
 };

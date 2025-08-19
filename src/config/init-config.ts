@@ -2,20 +2,33 @@ import * as vscode from 'vscode';
 import { pathToFileURL } from 'node:url';
 import { Options, InitValues } from '../interfaces.js';
 import { DEFAULT_OPTIONS } from './const.js';
+import {
+  getHoverProvider,
+  getTemplateLinkProvider,
+  getTemplatesNameProvider,
+} from '../templates/providers.js';
+import { getIncludeProvider, getSignatureProvider } from '../include/providers.js';
+import {
+  getTagsProvider,
+  getIfWithTagsProvider,
+  getForWithTagsProvider,
+  getForInWithTagsProvider,
+  getForOfWithTagsProvider,
+} from '../tags/providers.js';
+import { getInjectedUserDataProvider } from '../user-data/providers.js';
+
+let values: InitValues;
 
 function createInitOptionsWatcher() {
-  const initOptionsWatcher = vscode.workspace.createFileSystemWatcher('**/tao.config.js');
-  const message =
-    'Change in config file detected, reload window (F1 - Reload Window) to see effects';
+  const initOptionsWatcher = vscode.workspace.createFileSystemWatcher(`**/tao.config.js`);
 
-  initOptionsWatcher.onDidCreate(() => vscode.window.showInformationMessage(message));
-  initOptionsWatcher.onDidChange(() => vscode.window.showInformationMessage(message));
-  initOptionsWatcher.onDidDelete(() => vscode.window.showInformationMessage(message));
+  initOptionsWatcher.onDidCreate(() => getInitValues());
+  initOptionsWatcher.onDidChange(() => getInitValues('update'));
+  initOptionsWatcher.onDidDelete(() => getInitValues());
 
   return initOptionsWatcher;
 }
 
-// aussi un watcher pour le changement uniquement ?
 async function getInitOptions() {
   try {
     const options = await vscode.workspace.findFiles('**/tao.config.js', '**/node_modules/**');
@@ -25,7 +38,8 @@ async function getInitOptions() {
       return DEFAULT_OPTIONS;
     }
 
-    const configPath = pathToFileURL(options[0].fsPath).href;
+    // cache buster
+    const configPath = pathToFileURL(options[0].fsPath).href + `?update=${Date.now()}`;
     const optionsParsed = await import(configPath);
     const configuration = optionsParsed.default;
     const isConfigurationValid = isAValidConfiguration(configuration);
@@ -67,7 +81,7 @@ function isAValidConfiguration(optionsProvided: Options): optionsProvided is Opt
   return true;
 }
 
-async function getInitValues() {
+async function getInitValues(typeUpdate: 'none' | 'update' = 'none') {
   const { extension, parse, tags } = await getInitOptions();
   const { opening, closing } = tags;
   const { exec, interpolate, raw } = parse;
@@ -81,7 +95,11 @@ async function getInitValues() {
   const openingWithRaw = opening + raw;
   const openingAndClosingRaw = `${openingWithRaw} ${closing}`;
 
-  const values: InitValues = {
+  if (typeUpdate === 'update') {
+    vscode.window.showInformationMessage('✔️ Configuration successfully updated');
+  }
+
+  values = {
     openingAndClosingEvaluated,
     openingAndClosingInterpolated,
     openingAndClosingRaw,
@@ -92,8 +110,44 @@ async function getInitValues() {
     openingWithRaw,
     opening,
   };
-
-  return values;
 }
 
-export { getInitOptions, getInitValues, createInitOptionsWatcher };
+function initProviders() {
+  const tagsProvider = getTagsProvider();
+
+  const includeProvider = getIncludeProvider();
+
+  const ifWithTagsProvider = getIfWithTagsProvider();
+
+  const injectedUserDataProvider = getInjectedUserDataProvider();
+
+  const forWithTagsProvider = getForWithTagsProvider();
+
+  const forInWithTagsProvider = getForInWithTagsProvider();
+
+  const forOfWithTagsProvider = getForOfWithTagsProvider();
+
+  const signatureProvider = getSignatureProvider();
+
+  const templatesNameProvider = getTemplatesNameProvider();
+
+  const templateLinkProvider = getTemplateLinkProvider();
+
+  const hoverProvider = getHoverProvider();
+
+  return [
+    tagsProvider,
+    includeProvider,
+    ifWithTagsProvider,
+    injectedUserDataProvider,
+    forWithTagsProvider,
+    forInWithTagsProvider,
+    forOfWithTagsProvider,
+    signatureProvider,
+    templatesNameProvider,
+    templateLinkProvider,
+    hoverProvider,
+  ];
+}
+
+export { getInitOptions, getInitValues, createInitOptionsWatcher, values, initProviders };

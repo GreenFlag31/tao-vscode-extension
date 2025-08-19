@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 import { CompletionItemSnippetData } from './interfaces.js';
-import { WHOLE_INCLUDE } from './config/const.js';
 import { log } from 'console';
 
 function getLineTextUntilPosition(document: vscode.TextDocument, position: vscode.Position) {
@@ -41,7 +40,7 @@ function createCompletionItemSnippet(...completionItems: CompletionItemSnippetDa
 
 /**
  * Do NOT suggest an item provider if cursor inside item.
- * Tested through item regex.
+ * Tested through item regex. Exclusive end index.
  */
 function isCursorInsideCompletionItem(
   document: vscode.TextDocument,
@@ -54,8 +53,6 @@ function isCursorInsideCompletionItem(
   if (!indices) return false;
 
   const [start, end] = indices;
-  log(cursor, start, end);
-  // exclusive end index
   return cursor >= start && cursor < end;
 }
 

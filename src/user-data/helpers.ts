@@ -5,7 +5,7 @@ import path from 'path';
 
 let injectedUserData: UserData[] = [];
 
-function createTemplatesFilesWatcherForInjectedData() {
+function createInjectedDataWatcher() {
   const injectedDataWatcher = vscode.workspace.createFileSystemWatcher(
     `**/.vscode/tao-user-data.json`
   );
@@ -33,8 +33,7 @@ async function getInjectedUserData() {
 
     injectedUserData = dataIsValid ? userData : [];
   } catch (error) {
-    // vscode.window.showWarningMessage('No injected data found');
-    return undefined;
+    injectedUserData = [];
   }
 }
 
@@ -54,5 +53,5 @@ export {
   getInjectedUserData,
   getInjectedUserDataPath,
   injectedUserData,
-  createTemplatesFilesWatcherForInjectedData,
+  createInjectedDataWatcher,
 };

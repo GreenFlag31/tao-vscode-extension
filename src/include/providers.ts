@@ -6,16 +6,17 @@ import {
 } from '../utils.js';
 import { CompletionItemSnippetData, InitValues } from '../interfaces.js';
 import { INCLUDE, WHOLE_INCLUDE } from '../config/const.js';
+import { values } from '../config/init-config.js';
 
-function getIncludeProvider(values: InitValues) {
-  const { extension } = values;
-
+function getIncludeProvider() {
   const includeProvider = vscode.languages.registerCompletionItemProvider(
-    { language: extension, scheme: 'file' },
+    { language: values.extension, scheme: 'file' },
     {
       provideCompletionItems(document, position) {
         // ne pas proposer si curseur est dans l'include
-        if (isCursorInsideCompletionItem(document, position, WHOLE_INCLUDE)) return undefined;
+        if (isCursorInsideCompletionItem(document, position, WHOLE_INCLUDE)) {
+          return undefined;
+        }
 
         const includeItemData: CompletionItemSnippetData = {
           name: 'include',
@@ -40,11 +41,9 @@ function getIncludeProvider(values: InitValues) {
   return includeProvider;
 }
 
-function getSignatureProvider(values: InitValues) {
-  const { extension } = values;
-
+function getSignatureProvider() {
   const signatureProvider = vscode.languages.registerSignatureHelpProvider(
-    { language: extension, scheme: 'file' },
+    { language: values.extension, scheme: 'file' },
     {
       provideSignatureHelp(document, position) {
         const textUpToCursor = getLineTextUntilPosition(document, position);

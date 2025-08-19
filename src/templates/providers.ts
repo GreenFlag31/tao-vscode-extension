@@ -9,20 +9,19 @@ import {
 } from './helpers.js';
 import { log } from 'node:console';
 import { isInFirstIncludeArgument } from '../include/helpers.js';
+import { values } from '../config/init-config.js';
 
-function getTemplatesNameProvider(values: InitValues) {
-  const { extension } = values;
-
+function getTemplatesNameProvider() {
   const templatesNameProvider = vscode.languages.registerCompletionItemProvider(
-    { language: extension, scheme: 'file' },
+    { language: values.extension, scheme: 'file' },
     {
       provideCompletionItems(document, position) {
         if (!isInFirstIncludeArgument(document, position)) return undefined;
+
         const templates = excludeCurrentFileFromTemplatePropositions(
           completeTemplatesPath,
           document.fileName
         );
-
         const remainingTemplates = transformTemplatesNamesToCompletionItems(templates);
 
         return remainingTemplates;
@@ -36,10 +35,8 @@ function getTemplatesNameProvider(values: InitValues) {
   return templatesNameProvider;
 }
 
-function getTemplateLinkProvider(values: InitValues) {
-  const { extension } = values;
-
-  const templateLinkProvider = vscode.languages.registerDefinitionProvider([extension], {
+function getTemplateLinkProvider() {
+  const templateLinkProvider = vscode.languages.registerDefinitionProvider(values.extension, {
     provideDefinition(document, position) {
       const word = getTemplateNameFromTemplateInclude(document, position);
       if (!word) return;
@@ -59,10 +56,8 @@ function getTemplateLinkProvider(values: InitValues) {
   return templateLinkProvider;
 }
 
-function getHoverProvider(values: InitValues) {
-  const { extension } = values;
-
-  const hoverProvider = vscode.languages.registerHoverProvider(extension, {
+function getHoverProvider() {
+  const hoverProvider = vscode.languages.registerHoverProvider(values.extension, {
     provideHover(document, position) {
       const word = getTemplateNameFromTemplateInclude(document, position);
       if (!word) return;
@@ -73,7 +68,7 @@ function getHoverProvider(values: InitValues) {
 
       return new vscode.Hover(
         new vscode.MarkdownString(
-          `Child template included in this template.  \n\n📂 Location: \`${template}\``
+          `Child template included in this template.  \n\n Location: \`${template}\``
         )
       );
     },

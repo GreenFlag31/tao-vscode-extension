@@ -1,78 +1,30 @@
 import * as vscode from 'vscode';
-import {
-  createTemplatesFilesWatcherForTemplatesFiles,
-  getTemplatesFiles,
-} from './templates/helpers.js';
-import {
-  createTemplatesFilesWatcherForInjectedData,
-  getInjectedUserData,
-} from './user-data/helpers.js';
-import { getInjectedUserDataProvider } from './user-data/providers.js';
-import {
-  getForInWithTagsProvider,
-  getForOfWithTagsProvider,
-  getForWithTagsProvider,
-  getIfWithTagsProvider,
-  getTagsProvider,
-} from './tags/providers.js';
-import { getIncludeProvider, getSignatureProvider } from './include/providers.js';
-import {
-  getHoverProvider,
-  getTemplateLinkProvider,
-  getTemplatesNameProvider,
-} from './templates/providers.js';
-import { createInitOptionsWatcher, getInitValues } from './config/init-config.js';
+import { createTemplatesFilesWatcher, getTemplatesFiles } from './templates/helpers.js';
+import { createInjectedDataWatcher, getInjectedUserData } from './user-data/helpers.js';
+import { createInitOptionsWatcher, getInitValues, initProviders } from './config/init-config.js';
 
 // This method is called when your extension is activated
-export async function activate(context: vscode.ExtensionContext) {
-  const values = await getInitValues();
-  createInitOptionsWatcher();
-  const { extension } = values;
+async function activate(context: vscode.ExtensionContext) {
+  await getInitValues();
+  const initOptionsWatcher = createInitOptionsWatcher();
 
-  await getTemplatesFiles(extension);
-  const templatesFilesWatcher = createTemplatesFilesWatcherForTemplatesFiles(extension);
+  await getTemplatesFiles();
+  const templatesFilesWatcher = createTemplatesFilesWatcher();
 
   await getInjectedUserData();
-  const injectedDataWatcher = createTemplatesFilesWatcherForInjectedData();
+  const injectedDataWatcher = createInjectedDataWatcher();
 
-  const tagsProvider = getTagsProvider(values);
-
-  const includeProvider = getIncludeProvider(values);
-
-  const ifWithTagsProvider = getIfWithTagsProvider(values);
-
-  const injectedUserDataProvider = getInjectedUserDataProvider(values);
-
-  const forWithTagsProvider = getForWithTagsProvider(values);
-
-  const forInWithTagsProvider = getForInWithTagsProvider(values);
-
-  const forOfWithTagsProvider = getForOfWithTagsProvider(values);
-
-  const signatureProvider = getSignatureProvider(values);
-
-  const templatesNameProvider = getTemplatesNameProvider(values);
-
-  const templateLinkProvider = getTemplateLinkProvider(values);
-
-  const hoverProvider = getHoverProvider(values);
+  const providersAndWatchers = initProviders();
 
   context.subscriptions.push(
-    includeProvider,
-    tagsProvider,
-    signatureProvider,
-    templatesNameProvider,
-    templateLinkProvider,
-    ifWithTagsProvider,
-    forOfWithTagsProvider,
-    forInWithTagsProvider,
-    forWithTagsProvider,
-    injectedUserDataProvider,
+    ...providersAndWatchers,
+    initOptionsWatcher,
     templatesFilesWatcher,
-    hoverProvider,
     injectedDataWatcher
   );
 }
 
 // This method is called when your extension is deactivated
-export function deactivate() {}
+function deactivate() {}
+
+export { activate, deactivate };

@@ -1,13 +1,12 @@
 import * as vscode from 'vscode';
 import { createCompletionItemSnippet, getFileName } from '../utils.js';
 import { getCurrentInjectedData, injectedUserData } from './helpers.js';
-import { CompletionItemSnippetData, InitValues } from '../interfaces.js';
+import { CompletionItemSnippetData } from '../interfaces.js';
+import { values } from '../config/init-config.js';
 
-function getInjectedUserDataProvider(values: InitValues) {
-  const { extension } = values;
-
+function getInjectedUserDataProvider() {
   const injectedUserDataProvider = vscode.languages.registerCompletionItemProvider(
-    { language: extension, scheme: 'file' },
+    { language: values.extension, scheme: 'file' },
     {
       provideCompletionItems(document, position) {
         const templateName = getFileName(document.fileName);

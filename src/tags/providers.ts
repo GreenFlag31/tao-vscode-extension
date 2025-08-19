@@ -6,30 +6,16 @@ import {
 } from '../utils.js';
 import { CompletionItemSnippetData, InitValues } from '../interfaces.js';
 import { WHOLE_INCLUDE } from '../config/const.js';
+import { log } from 'node:console';
+import { values } from '../config/init-config.js';
 
-function getTagsProvider(values: InitValues) {
-  const {
-    extension,
-    closing,
-    openingAndClosingEvaluated,
-    openingAndClosingInterpolated,
-    openingAndClosingRaw,
-    openingWithEvaluation,
-    openingWithInterpolate,
-    openingWithRaw,
-    opening,
-  } = values;
-
+function getTagsProvider() {
   const tagsProvider = vscode.languages.registerCompletionItemProvider(
-    { language: extension, scheme: 'file' },
+    { language: values.extension, scheme: 'file' },
     {
       provideCompletionItems(document, position) {
         const text = getLineTextUntilPosition(document, position);
 
-        // ne pas proposer si dans un tag
-        // +
-
-        // ne pas proposer si curseur est dans l'include
         if (isCursorInsideCompletionItem(document, position, WHOLE_INCLUDE)) {
           return undefined;
         }
@@ -40,10 +26,10 @@ function getTagsProvider(values: InitValues) {
           : new vscode.Range(position, position);
 
         const evalItemData: CompletionItemSnippetData = {
-          name: openingAndClosingEvaluated,
-          insertText: openingWithEvaluation + ' ${1} ' + closing,
+          name: values.openingAndClosingEvaluated,
+          insertText: values.openingWithEvaluation + ' ${1} ' + values.closing,
           label: {
-            label: openingAndClosingEvaluated,
+            label: values.openingAndClosingEvaluated,
             detail: ' Evaluation – JS execution',
             description: 'TAO',
           },
@@ -53,10 +39,10 @@ function getTagsProvider(values: InitValues) {
         };
 
         const interpolationItemData: CompletionItemSnippetData = {
-          name: openingAndClosingInterpolated,
-          insertText: openingWithInterpolate + ' ${1} ' + closing,
+          name: values.openingAndClosingInterpolated,
+          insertText: values.openingWithInterpolate + ' ${1} ' + values.closing,
           label: {
-            label: openingAndClosingInterpolated,
+            label: values.openingAndClosingInterpolated,
             detail: ' Interpolation – escaped output',
             description: 'TAO',
           },
@@ -66,10 +52,10 @@ function getTagsProvider(values: InitValues) {
         };
 
         const rawItemData: CompletionItemSnippetData = {
-          name: openingAndClosingRaw,
-          insertText: openingWithRaw + ' ${1} ' + closing,
+          name: values.openingAndClosingRaw,
+          insertText: values.openingWithRaw + ' ${1} ' + values.closing,
           label: {
-            label: openingAndClosingRaw,
+            label: values.openingAndClosingRaw,
             detail: ' Raw – unescaped HTML',
             description: 'TAO',
           },
@@ -82,27 +68,29 @@ function getTagsProvider(values: InitValues) {
         return items;
       },
     },
-    ...opening.split('')
+    ...values.opening.split('')
   );
 
   return tagsProvider;
 }
 
-function getIfWithTagsProvider(values: InitValues) {
-  const { extension, closing, openingWithEvaluation } = values;
-
+function getIfWithTagsProvider() {
   const ifWithTagsProvider = vscode.languages.registerCompletionItemProvider(
-    { language: extension, scheme: 'file' },
+    { language: values.extension, scheme: 'file' },
     {
       provideCompletionItems(document, position) {
+        if (isCursorInsideCompletionItem(document, position, WHOLE_INCLUDE)) {
+          return undefined;
+        }
+
         const insertText =
-          openingWithEvaluation +
+          values.openingWithEvaluation +
           ' if ( ${1} ) { ' +
-          closing +
+          values.closing +
           '\n ${2} \n' +
-          openingWithEvaluation +
+          values.openingWithEvaluation +
           ' } ' +
-          closing;
+          values.closing;
 
         const data: CompletionItemSnippetData = {
           name: 'ifWithTags',
@@ -125,22 +113,24 @@ function getIfWithTagsProvider(values: InitValues) {
   return ifWithTagsProvider;
 }
 
-function getForWithTagsProvider(values: InitValues) {
-  const { extension, closing, openingWithEvaluation } = values;
-
+function getForWithTagsProvider() {
   const forWithTagsProvider = vscode.languages.registerCompletionItemProvider(
-    { language: extension, scheme: 'file' },
+    { language: values.extension, scheme: 'file' },
     {
       provideCompletionItems(document, position) {
+        if (isCursorInsideCompletionItem(document, position, WHOLE_INCLUDE)) {
+          return undefined;
+        }
+
         const insertTextFor =
-          openingWithEvaluation +
+          values.openingWithEvaluation +
           ' for (let ${1:index} = 0; ${1} < ${2:array}.length; ${1}++) { ' +
-          closing +
+          values.closing +
           '\n  const ${3:element} = ${2}[${1}];\n' +
           '  ${4}\n' +
-          openingWithEvaluation +
+          values.openingWithEvaluation +
           ' } ' +
-          closing;
+          values.closing;
 
         const fordata: CompletionItemSnippetData = {
           name: 'forWithTags',
@@ -165,23 +155,25 @@ function getForWithTagsProvider(values: InitValues) {
   return forWithTagsProvider;
 }
 
-function getForInWithTagsProvider(values: InitValues) {
-  const { extension, closing, openingWithEvaluation } = values;
-
+function getForInWithTagsProvider() {
   const forInWithTagsProvider = vscode.languages.registerCompletionItemProvider(
-    { language: extension, scheme: 'file' },
+    { language: values.extension, scheme: 'file' },
     {
       provideCompletionItems(document, position) {
+        if (isCursorInsideCompletionItem(document, position, WHOLE_INCLUDE)) {
+          return undefined;
+        }
+
         const insertTextforIn =
-          openingWithEvaluation +
+          values.openingWithEvaluation +
           ' for (const ${1:key} in ${2:object}) { ' +
-          closing +
+          values.closing +
           '\n  if (${2}.hasOwnProperty(${1})) {\n' +
           '    ${3}\n' +
           '  }\n' +
-          openingWithEvaluation +
+          values.openingWithEvaluation +
           ' } ' +
-          closing;
+          values.closing;
 
         const dataForIn: CompletionItemSnippetData = {
           name: 'forInWithTags',
@@ -206,21 +198,23 @@ function getForInWithTagsProvider(values: InitValues) {
   return forInWithTagsProvider;
 }
 
-function getForOfWithTagsProvider(values: InitValues) {
-  const { extension, closing, openingWithEvaluation } = values;
-
+function getForOfWithTagsProvider() {
   const forOfWithTagsProvider = vscode.languages.registerCompletionItemProvider(
-    { language: extension, scheme: 'file' },
+    { language: values.extension, scheme: 'file' },
     {
       provideCompletionItems(document, position) {
+        if (isCursorInsideCompletionItem(document, position, WHOLE_INCLUDE)) {
+          return undefined;
+        }
+
         const insertText =
-          openingWithEvaluation +
+          values.openingWithEvaluation +
           ' for (const ${1:element} of ${2:array}) { ' +
-          closing +
+          values.closing +
           '\n  ${3}\n' +
-          openingWithEvaluation +
+          values.openingWithEvaluation +
           ' } ' +
-          closing;
+          values.closing;
 
         const data: CompletionItemSnippetData = {
           name: 'forOfWithTags',

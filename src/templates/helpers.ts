@@ -1,20 +1,26 @@
 import * as vscode from 'vscode';
 import { getFileName } from '../utils.js';
+import { values } from '../config/init-config.js';
 
 let completeTemplatesPath: string[] = [];
 
-function createTemplatesFilesWatcherForTemplatesFiles(extension: string) {
-  const templatesFilesWatcher = vscode.workspace.createFileSystemWatcher(`**/*.${extension}`);
-  templatesFilesWatcher.onDidCreate(() => getTemplatesFiles(extension));
-  templatesFilesWatcher.onDidChange(() => getTemplatesFiles(extension));
-  templatesFilesWatcher.onDidDelete(() => getTemplatesFiles(extension));
+function createTemplatesFilesWatcher() {
+  const templatesFilesWatcher = vscode.workspace.createFileSystemWatcher(
+    `**/*.${values.extension}`
+  );
+  templatesFilesWatcher.onDidCreate(getTemplatesFiles);
+  templatesFilesWatcher.onDidChange(getTemplatesFiles);
+  templatesFilesWatcher.onDidDelete(getTemplatesFiles);
 
   return templatesFilesWatcher;
 }
 
-async function getTemplatesFiles(extension: string) {
+async function getTemplatesFiles() {
   const completeTemplatesReferences: string[] = [];
-  const templates = await vscode.workspace.findFiles(`**/*.${extension}`, '**/node_modules/**');
+  const templates = await vscode.workspace.findFiles(
+    `**/*.${values.extension}`,
+    '**/node_modules/**'
+  );
 
   for (const template of templates) {
     const { path } = template;
@@ -73,7 +79,7 @@ function getTemplateNameFromTemplateInclude(
 export {
   excludeCurrentFileFromTemplatePropositions,
   getTemplatesFiles,
-  createTemplatesFilesWatcherForTemplatesFiles,
+  createTemplatesFilesWatcher,
   completeTemplatesPath,
   transformTemplatesNamesToCompletionItems,
   getTemplateNameFromTemplateInclude,

@@ -18,12 +18,13 @@ function getInjectedUserDataProvider() {
         const variablesAndHelpers: vscode.CompletionItem[] = [];
 
         for (const variable of variables) {
+          const { name, type } = variable;
           const data: CompletionItemSnippetData = {
-            name: variable,
-            insertText: variable,
+            name,
+            insertText: name,
             label: {
-              label: variable,
-              detail: ` injected template variable (${typeof variable})`,
+              label: name,
+              detail: ` injected template variable (${type})`,
               description: 'TAO',
             },
             documentation: 'Local template variable',
@@ -35,11 +36,12 @@ function getInjectedUserDataProvider() {
         }
 
         for (const helper of helpers) {
+          const { name, params } = helper;
           const data: CompletionItemSnippetData = {
-            name: helper,
-            insertText: helper,
+            name,
+            insertText: name,
             label: {
-              label: helper,
+              label: name,
               detail: ` injected template helper function`,
               description: 'TAO',
             },

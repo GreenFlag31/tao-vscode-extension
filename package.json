@@ -1,7 +1,7 @@
 {
-  "name": "node-tao",
-  "displayName": "node-tao",
-  "description": "official node tao template engine extension",
+  "name": "node-tao-extension",
+  "displayName": "node-tao extension",
+  "description": "Official node-tao template engine extension",
   "version": "0.0.1",
   "type": "module",
   "engines": {
@@ -16,12 +16,6 @@
   ],
   "main": "./out/extension.js",
   "contributes": {
-    "commands": [
-      {
-        "command": "node-tao.helloWorld",
-        "title": "Hello World"
-      }
-    ],
     "grammars": [
       {
         "language": "html",

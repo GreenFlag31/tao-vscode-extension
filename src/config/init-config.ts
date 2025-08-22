@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { pathToFileURL } from 'node:url';
-import { Options, InitValues } from '../interfaces.js';
+import { Options, InitValues, InitReturn } from '../interfaces.js';
 import { DEFAULT_OPTIONS } from './const.js';
 import {
   getHoverProvider,
@@ -29,13 +29,15 @@ function createInitOptionsWatcher() {
   return initOptionsWatcher;
 }
 
-async function getInitOptions() {
+async function getInitOptions(): Promise<InitReturn> {
+  const failedInit = { success: false, options: DEFAULT_OPTIONS };
+
   try {
     const options = await vscode.workspace.findFiles('**/tao.config.js', '**/node_modules/**');
-    if (options.length === 0) return DEFAULT_OPTIONS;
+    if (options.length === 0) return failedInit;
     if (options.length > 1) {
       vscode.window.showWarningMessage('Multiple TAO configuration files found');
-      return DEFAULT_OPTIONS;
+      return failedInit;
     }
 
     // cache buster
@@ -44,9 +46,11 @@ async function getInitOptions() {
     const configuration = optionsParsed.default;
     const isConfigurationValid = isAValidConfiguration(configuration);
 
-    return isConfigurationValid ? configuration : DEFAULT_OPTIONS;
+    if (!isConfigurationValid) return failedInit;
+
+    return { success: true, options: configuration };
   } catch (error) {
-    return DEFAULT_OPTIONS;
+    return failedInit;
   }
 }
 
@@ -82,7 +86,8 @@ function isAValidConfiguration(optionsProvided: Options): optionsProvided is Opt
 }
 
 async function getInitValues(typeUpdate: 'none' | 'update' = 'none') {
-  const { extension, parse, tags } = await getInitOptions();
+  const { success, options } = await getInitOptions();
+  const { extension, parse, tags } = options;
   const { opening, closing } = tags;
   const { exec, interpolate, raw } = parse;
 
@@ -95,7 +100,7 @@ async function getInitValues(typeUpdate: 'none' | 'update' = 'none') {
   const openingWithRaw = opening + raw;
   const openingAndClosingRaw = `${openingWithRaw} ${closing}`;
 
-  if (typeUpdate === 'update') {
+  if (success && typeUpdate === 'update') {
     vscode.window.showInformationMessage('✔️ Configuration successfully updated');
   }
 

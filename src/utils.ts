@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 import { CompletionItemSnippetData } from './interfaces.js';
-import { log } from 'console';
 
 function getLineTextUntilPosition(document: vscode.TextDocument, position: vscode.Position) {
   const lineText = document.lineAt(position.line).text;

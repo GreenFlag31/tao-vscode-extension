@@ -51,10 +51,21 @@ export interface Parse {
   raw: string;
 }
 
+export interface VariableData {
+  name: string;
+  type: string;
+}
+
+export interface HelperData {
+  name: string;
+  params: string;
+}
+
 export interface UserData {
   template: string;
-  helpers: string[];
-  variables: string[];
+  variables: VariableData[];
+  helpers: HelperData[];
+  lastUpdate: string;
 }
 
 export interface InitValues {
@@ -86,3 +97,8 @@ export type ItemKind =
   | vscode.CompletionItemKind.Snippet
   | vscode.CompletionItemKind.Function
   | vscode.CompletionItemKind.Variable;
+
+export interface InitReturn {
+  success: boolean;
+  options: Options;
+}

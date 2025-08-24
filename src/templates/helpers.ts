@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { getFileName } from '../utils.js';
 import { values } from '../config/init-config.js';
+import { log } from 'console';
 
 let completeTemplatesPath: string[] = [];
 

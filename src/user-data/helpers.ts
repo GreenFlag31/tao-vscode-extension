@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { readFile } from 'fs/promises';
 import { UserData } from '../interfaces.js';
 import path from 'path';
+import { normalizeWindowsPath } from '../utils.js';
 
 let injectedUserData: UserData[] = [];
 
@@ -43,8 +44,9 @@ function validateInjectedUserData(userDatas: UserData[]): userDatas is UserData[
   return true;
 }
 
-function getCurrentInjectedData(userDatas: UserData[] = [], templateName: string) {
-  return userDatas.find((data) => data.template === templateName);
+function getCurrentInjectedData(userDatas: UserData[] = [], templatePath: string) {
+  const templatePathNormalized = normalizeWindowsPath(templatePath).toLowerCase();
+  return userDatas.find((data) => data.template.toLowerCase() === templatePathNormalized);
 }
 
 export {

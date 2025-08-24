@@ -40,6 +40,7 @@ function createCompletionItemSnippet(...completionItems: CompletionItemSnippetDa
 /**
  * Do NOT suggest an item provider if cursor inside item.
  * Tested through item regex. Exclusive end index.
+ * Modifier, car va prendre la 1 occurrence.
  */
 function isCursorInsideCompletionItem(
   document: vscode.TextDocument,

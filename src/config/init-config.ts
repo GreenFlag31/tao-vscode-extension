@@ -7,7 +7,7 @@ import {
   getTemplateLinkProvider,
   getTemplatesNameProvider,
 } from '../templates/providers.js';
-import { getIncludeProvider, getSignatureProvider } from '../include/providers.js';
+import { getIncludeProvider, getIncludeSignatureProvider } from '../include/providers.js';
 import {
   getTagsProvider,
   getIfWithTagsProvider,
@@ -16,6 +16,7 @@ import {
   getForOfWithTagsProvider,
 } from '../tags/providers.js';
 import { getInjectedUserDataProvider } from '../user-data/providers.js';
+import { log } from 'node:console';
 
 let values: InitValues;
 
@@ -132,7 +133,7 @@ function initProviders() {
 
   const forOfWithTagsProvider = getForOfWithTagsProvider();
 
-  const signatureProvider = getSignatureProvider();
+  const includeSignatureProvider = getIncludeSignatureProvider();
 
   const templatesNameProvider = getTemplatesNameProvider();
 
@@ -148,7 +149,7 @@ function initProviders() {
     forWithTagsProvider,
     forInWithTagsProvider,
     forOfWithTagsProvider,
-    signatureProvider,
+    includeSignatureProvider,
     templatesNameProvider,
     templateLinkProvider,
     hoverProvider,

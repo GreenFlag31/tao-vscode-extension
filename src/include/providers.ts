@@ -4,9 +4,10 @@ import {
   getLineTextUntilPosition,
   isCursorInsideCompletionItem,
 } from '../utils.js';
-import { CompletionItemSnippetData, InitValues } from '../interfaces.js';
+import { CompletionItemSnippetData } from '../interfaces.js';
 import { INCLUDE, WHOLE_INCLUDE } from '../config/const.js';
 import { values } from '../config/init-config.js';
+import { log } from 'console';
 
 function getIncludeProvider() {
   const includeProvider = vscode.languages.registerCompletionItemProvider(
@@ -41,7 +42,7 @@ function getIncludeProvider() {
   return includeProvider;
 }
 
-function getSignatureProvider() {
+function getIncludeSignatureProvider() {
   const signatureProvider = vscode.languages.registerSignatureHelpProvider(
     { language: values.extension, scheme: 'file' },
     {
@@ -87,4 +88,4 @@ function getSignatureProvider() {
   return signatureProvider;
 }
 
-export { getIncludeProvider, getSignatureProvider };
+export { getIncludeProvider, getIncludeSignatureProvider };

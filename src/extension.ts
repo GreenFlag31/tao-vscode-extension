@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { createTemplatesFilesWatcher, getTemplatesFiles } from './templates/helpers.js';
 import { createInjectedDataWatcher, getInjectedUserData } from './user-data/helpers.js';
 import { createInitOptionsWatcher, getInitValues, initProviders } from './config/init-config.js';
+import { log } from 'console';
 
 // This method is called when your extension is activated
 async function activate(context: vscode.ExtensionContext) {
@@ -14,10 +15,10 @@ async function activate(context: vscode.ExtensionContext) {
   await getInjectedUserData();
   const injectedDataWatcher = createInjectedDataWatcher();
 
-  const providersAndWatchers = initProviders();
+  const providers = initProviders();
 
   context.subscriptions.push(
-    ...providersAndWatchers,
+    ...providers,
     initOptionsWatcher,
     templatesFilesWatcher,
     injectedDataWatcher

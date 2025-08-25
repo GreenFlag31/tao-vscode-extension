@@ -46,6 +46,7 @@ function validateInjectedUserData(userDatas: UserData[]): userDatas is UserData[
 
 function getCurrentInjectedData(userDatas: UserData[] = [], templatePath: string) {
   const templatePathNormalized = normalizeWindowsPath(templatePath).toLowerCase();
+
   return userDatas.find((data) => data.template.toLowerCase() === templatePathNormalized);
 }
 

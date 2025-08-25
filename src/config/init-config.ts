@@ -16,7 +16,6 @@ import {
   getForOfWithTagsProvider,
 } from '../tags/providers.js';
 import { getInjectedUserDataProvider } from '../user-data/providers.js';
-import { log } from 'node:console';
 
 let values: InitValues;
 
@@ -123,6 +122,8 @@ function initProviders() {
 
   const includeProvider = getIncludeProvider();
 
+  const includeSignatureProvider = getIncludeSignatureProvider();
+
   const ifWithTagsProvider = getIfWithTagsProvider();
 
   const injectedUserDataProvider = getInjectedUserDataProvider();
@@ -132,8 +133,6 @@ function initProviders() {
   const forInWithTagsProvider = getForInWithTagsProvider();
 
   const forOfWithTagsProvider = getForOfWithTagsProvider();
-
-  const includeSignatureProvider = getIncludeSignatureProvider();
 
   const templatesNameProvider = getTemplatesNameProvider();
 

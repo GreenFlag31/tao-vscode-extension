@@ -2,7 +2,6 @@ import * as vscode from 'vscode';
 import { createTemplatesFilesWatcher, getTemplatesFiles } from './templates/helpers.js';
 import { createInjectedDataWatcher, getInjectedUserData } from './user-data/helpers.js';
 import { createInitOptionsWatcher, getInitValues, initProviders } from './config/init-config.js';
-import { log } from 'console';
 
 // This method is called when your extension is activated
 async function activate(context: vscode.ExtensionContext) {
@@ -25,7 +24,4 @@ async function activate(context: vscode.ExtensionContext) {
   );
 }
 
-// This method is called when your extension is deactivated
-function deactivate() {}
-
-export { activate, deactivate };
+export { activate };

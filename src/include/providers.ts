@@ -2,20 +2,18 @@ import * as vscode from 'vscode';
 import {
   createCompletionItemSnippet,
   getLineTextUntilPosition,
-  isCursorInsideCompletionItem,
+  isCursorInsideCompletionItemGlobal,
 } from '../utils.js';
 import { CompletionItemSnippetData } from '../interfaces.js';
-import { INCLUDE, WHOLE_INCLUDE } from '../config/const.js';
 import { values } from '../config/init-config.js';
-import { log } from 'console';
 
 function getIncludeProvider() {
   const includeProvider = vscode.languages.registerCompletionItemProvider(
     { language: values.extension, scheme: 'file' },
     {
       provideCompletionItems(document, position) {
-        // ne pas proposer si curseur est dans l'include
-        if (isCursorInsideCompletionItem(document, position, WHOLE_INCLUDE)) {
+        const WHOLE_INCLUDE = /include\([^)]*\)?/dg;
+        if (isCursorInsideCompletionItemGlobal(document, position, WHOLE_INCLUDE)) {
           return undefined;
         }
 
@@ -48,10 +46,13 @@ function getIncludeSignatureProvider() {
     {
       provideSignatureHelp(document, position) {
         const textUpToCursor = getLineTextUntilPosition(document, position);
+        // multiple include sur même ligne très peu probable
+        const INCLUDE = /include\(['"`]?.*['"`]?.*,?/;
 
-        // Regarde s'il y a un appel à include(...) avant le curseur
         const includeCall = INCLUDE.exec(textUpToCursor);
-        const argText = includeCall ? includeCall[0] : '';
+        if (!includeCall) return undefined;
+
+        const argText = includeCall[0];
         const commaCount = (argText.match(/,/g) || []).length;
 
         const sig = new vscode.SignatureInformation(

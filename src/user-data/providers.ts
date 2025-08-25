@@ -10,7 +10,6 @@ function getInjectedUserDataProvider() {
     {
       provideCompletionItems(document, position) {
         const currentData = getCurrentInjectedData(injectedUserData, document.fileName);
-
         if (!currentData) return;
 
         const { variables, helpers } = currentData;

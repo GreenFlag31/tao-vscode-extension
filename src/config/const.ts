@@ -24,11 +24,6 @@ const DEFAULT_OPTIONS: Options = {
   // views: DEFAULT_VIEWS,
 };
 
-const INCLUDE = /include\(['"`]?.*['"`]?.*,?/;
-const COMPLETE_INCLUDE = /include\(['"`]?.*['"`]?.*[^)]?$/;
-const WHOLE_INCLUDE = /include\([^)]*\)?/d;
-const TAG = /<%?$/;
-
 export {
   DEFAULT_CLOSING,
   DEFAULT_EXEC,
@@ -38,7 +33,4 @@ export {
   DEFAULT_OPTIONS,
   DEFAULT_RAW,
   DEFAULT_VIEWS,
-  INCLUDE,
-  COMPLETE_INCLUDE,
-  WHOLE_INCLUDE,
 };

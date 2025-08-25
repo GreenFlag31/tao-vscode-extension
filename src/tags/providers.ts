@@ -2,11 +2,9 @@ import * as vscode from 'vscode';
 import {
   createCompletionItemSnippet,
   getLineTextUntilPosition,
-  isCursorInsideCompletionItem,
+  isCursorInsideCompletionItemGlobal,
 } from '../utils.js';
-import { CompletionItemSnippetData, InitValues } from '../interfaces.js';
-import { WHOLE_INCLUDE } from '../config/const.js';
-import { log } from 'node:console';
+import { CompletionItemSnippetData } from '../interfaces.js';
 import { values } from '../config/init-config.js';
 
 function getTagsProvider() {
@@ -16,11 +14,12 @@ function getTagsProvider() {
       provideCompletionItems(document, position) {
         const text = getLineTextUntilPosition(document, position);
 
-        if (isCursorInsideCompletionItem(document, position, WHOLE_INCLUDE)) {
+        const WHOLE_INCLUDE = /include\([^)]*\)?/dg;
+        if (isCursorInsideCompletionItemGlobal(document, position, WHOLE_INCLUDE)) {
           return undefined;
         }
 
-        const match = text.match(/<%?$/);
+        const match = text.match(/<%?$/); // changer ici !!
         const replaceRange = match
           ? new vscode.Range(position.translate(0, -match[0].length), position)
           : new vscode.Range(position, position);
@@ -79,7 +78,8 @@ function getIfWithTagsProvider() {
     { language: values.extension, scheme: 'file' },
     {
       provideCompletionItems(document, position) {
-        if (isCursorInsideCompletionItem(document, position, WHOLE_INCLUDE)) {
+        const WHOLE_INCLUDE = /include\([^)]*\)?/dg;
+        if (isCursorInsideCompletionItemGlobal(document, position, WHOLE_INCLUDE)) {
           return undefined;
         }
 
@@ -118,7 +118,8 @@ function getForWithTagsProvider() {
     { language: values.extension, scheme: 'file' },
     {
       provideCompletionItems(document, position) {
-        if (isCursorInsideCompletionItem(document, position, WHOLE_INCLUDE)) {
+        const WHOLE_INCLUDE = /include\([^)]*\)?/dg;
+        if (isCursorInsideCompletionItemGlobal(document, position, WHOLE_INCLUDE)) {
           return undefined;
         }
 
@@ -160,7 +161,8 @@ function getForInWithTagsProvider() {
     { language: values.extension, scheme: 'file' },
     {
       provideCompletionItems(document, position) {
-        if (isCursorInsideCompletionItem(document, position, WHOLE_INCLUDE)) {
+        const WHOLE_INCLUDE = /include\([^)]*\)?/dg;
+        if (isCursorInsideCompletionItemGlobal(document, position, WHOLE_INCLUDE)) {
           return undefined;
         }
 
@@ -203,7 +205,8 @@ function getForOfWithTagsProvider() {
     { language: values.extension, scheme: 'file' },
     {
       provideCompletionItems(document, position) {
-        if (isCursorInsideCompletionItem(document, position, WHOLE_INCLUDE)) {
+        const WHOLE_INCLUDE = /include\([^)]*\)?/dg;
+        if (isCursorInsideCompletionItemGlobal(document, position, WHOLE_INCLUDE)) {
           return undefined;
         }
 

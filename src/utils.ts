@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { CompletionItemSnippetData } from './interfaces.js';
+import { log } from 'console';
 
 function getLineTextUntilPosition(document: vscode.TextDocument, position: vscode.Position) {
   const lineText = document.lineAt(position.line).text;
@@ -38,22 +39,33 @@ function createCompletionItemSnippet(...completionItems: CompletionItemSnippetDa
 }
 
 /**
- * Do NOT suggest an item provider if cursor inside item.
- * Tested through item regex. Exclusive end index.
- * Modifier, car va prendre la 1 occurrence.
+ * Detects if the user's cursor is inside a given regex globally (there can be multiple occurrence on the same line).
  */
-function isCursorInsideCompletionItem(
+function isCursorInsideCompletionItemGlobal(
   document: vscode.TextDocument,
   position: vscode.Position,
   regex: RegExp
 ) {
-  const lineText = document.lineAt(position.line).text;
-  const cursor = position.character;
-  const indices = regex.exec(lineText)?.indices?.[0];
-  if (!indices) return false;
+  try {
+    const lineText = document.lineAt(position.line).text;
 
-  const [start, end] = indices;
-  return cursor >= start && cursor < end;
+    const cursor = position.character;
+    const matches = [...lineText.matchAll(regex)];
+    if (matches.length === 0) return false;
+
+    for (const match of matches) {
+      const [start = 0, end = 0] = match.indices?.[0] || [];
+      if (cursor >= end) continue;
+
+      // exclusive end
+      const isInInterval = cursor >= start && cursor < end;
+      if (isInInterval) return true;
+    }
+
+    return false;
+  } catch (error) {
+    log(error);
+  }
 }
 
 /**
@@ -69,6 +81,6 @@ export {
   getFileName,
   normalizeWindowsPath,
   createCompletionItemSnippet,
-  isCursorInsideCompletionItem,
   escapeRegExp,
+  isCursorInsideCompletionItemGlobal,
 };

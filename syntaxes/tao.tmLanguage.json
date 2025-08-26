@@ -1,0 +1,18 @@
+{
+  "scopeName": "text.html.tao",
+  "injectionSelector": "L:text.html.basic",
+  "patterns": [
+    {
+      "name": "meta.tag.tao",
+      "begin": "<%",
+      "end": "%>",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.tag.begin.tao" }
+      },
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.tag.end.tao" }
+      },
+      "patterns": [{ "include": "source.js" }]
+    }
+  ]
+}

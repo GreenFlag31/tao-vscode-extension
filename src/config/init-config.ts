@@ -14,6 +14,7 @@ import {
   getForWithTagsProvider,
   getForInWithTagsProvider,
   getForOfWithTagsProvider,
+  getIncludeWithTagsProvider,
 } from '../tags/providers.js';
 import { getInjectedUserDataProvider } from '../user-data/providers.js';
 
@@ -134,6 +135,8 @@ function initProviders() {
 
   const forOfWithTagsProvider = getForOfWithTagsProvider();
 
+  const includeWithTagsProvider = getIncludeWithTagsProvider();
+
   const templatesNameProvider = getTemplatesNameProvider();
 
   const templateLinkProvider = getTemplateLinkProvider();
@@ -152,6 +155,7 @@ function initProviders() {
     templatesNameProvider,
     templateLinkProvider,
     hoverProvider,
+    includeWithTagsProvider,
   ];
 }
 

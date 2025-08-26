@@ -240,10 +240,44 @@ function getForOfWithTagsProvider() {
   return forOfWithTagsProvider;
 }
 
+function getIncludeWithTagsProvider() {
+  const forOfWithTagsProvider = vscode.languages.registerCompletionItemProvider(
+    { language: values.extension, scheme: 'file' },
+    {
+      provideCompletionItems(document, position) {
+        const WHOLE_INCLUDE = /include\([^)]*\)?/dg;
+        if (isCursorInsideCompletionItemGlobal(document, position, WHOLE_INCLUDE)) {
+          return undefined;
+        }
+
+        const insertText = values.openingWithRaw + ' include("${1}") ' + values.closing;
+
+        const data: CompletionItemSnippetData = {
+          name: 'includeWithTags',
+          insertText,
+          label: {
+            label: 'include',
+            detail: ' include with tags',
+            description: 'TAO',
+          },
+          documentation: 'Insert an include with tags',
+          itemKind: vscode.CompletionItemKind.Snippet,
+        };
+
+        return createCompletionItemSnippet(data);
+      },
+    },
+    'includeWithTags'
+  );
+
+  return forOfWithTagsProvider;
+}
+
 export {
   getTagsProvider,
   getIfWithTagsProvider,
   getForWithTagsProvider,
-  getForOfWithTagsProvider,
   getForInWithTagsProvider,
+  getForOfWithTagsProvider,
+  getIncludeWithTagsProvider,
 };

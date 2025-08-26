@@ -18,9 +18,8 @@
   "contributes": {
     "grammars": [
       {
-        "language": "html",
         "scopeName": "text.html.tao",
-        "path": "./src/tao.tmLanguage.json",
+        "path": "./syntaxes/tao.tmLanguage.json",
         "injectTo": [
           "text.html.basic"
         ]

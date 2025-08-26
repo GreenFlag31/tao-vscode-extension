@@ -19,7 +19,7 @@ function getIncludeProvider() {
 
         const includeItemData: CompletionItemSnippetData = {
           name: 'include',
-          insertText: 'include("${1:template}", {${2}}, {${3}})',
+          insertText: 'include("${1}")',
           label: {
             label: 'include',
             detail: ' Tao template include function',

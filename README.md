@@ -2,6 +2,8 @@
 
 A Visual Studio Code extension that adds **language support** for the [TAO template engine](https://github.com/GreenFlag31/node-tao). Node-tao is a Nodejs template engine that focuses on performance, security, and developer experience.
 
+![Presentation](https://raw.githubusercontent.com/GreenFlag31/tao-vscode-extension/assets/presentation.gif)
+
 ## ✨ Features
 
 - **Tag completion** – Autocompletion for TAO template tags.
@@ -33,10 +35,14 @@ Injected data in a template file (variables and helpers) are available for autoc
 
 ```javascript
 const displayName = (firstname, lastname) => `${firstname} ${lastname}`;
-const result = tao.render('simple.html', { firstname: 'John', lastname: 'Doe' }, { displayName });
+const result = tao.render(
+  'template2.html',
+  { firstname: 'John', lastname: 'Doe' },
+  { displayName }
+);
 ```
 
-<!-- pic -->
+![Variable](https://raw.githubusercontent.com/GreenFlag31/tao-vscode-extension/assets/injected-data.gif)
 
 The data will be available **after** a specific render take place, since it has to be first injected.
 

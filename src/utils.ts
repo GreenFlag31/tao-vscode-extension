@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 import { CompletionItemSnippetData } from './interfaces.js';
-import { log } from 'console';
 
 function getLineTextUntilPosition(document: vscode.TextDocument, position: vscode.Position) {
   const lineText = document.lineAt(position.line).text;
@@ -46,26 +45,22 @@ function isCursorInsideCompletionItemGlobal(
   position: vscode.Position,
   regex: RegExp
 ) {
-  try {
-    const lineText = document.lineAt(position.line).text;
+  const lineText = document.lineAt(position.line).text;
 
-    const cursor = position.character;
-    const matches = [...lineText.matchAll(regex)];
-    if (matches.length === 0) return false;
+  const cursor = position.character;
+  const matches = [...lineText.matchAll(regex)];
+  if (matches.length === 0) return false;
 
-    for (const match of matches) {
-      const [start = 0, end = 0] = match.indices?.[0] || [];
-      if (cursor >= end) continue;
+  for (const match of matches) {
+    const [start = 0, end = 0] = match.indices?.[0] || [];
+    if (cursor >= end) continue;
 
-      // exclusive end
-      const isInInterval = cursor >= start && cursor < end;
-      if (isInInterval) return true;
-    }
-
-    return false;
-  } catch (error) {
-    log(error);
+    // exclusive end
+    const isInInterval = cursor >= start && cursor < end;
+    if (isInInterval) return true;
   }
+
+  return false;
 }
 
 /**

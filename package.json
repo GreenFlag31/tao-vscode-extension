@@ -1,6 +1,5 @@
 {
-  "name": "node-tao-extension",
-  "displayName": "node-tao extension",
+  "name": "tao-vscode-extension",
   "description": "Official node-tao template engine extension",
   "version": "0.0.1",
   "type": "module",
@@ -8,7 +7,7 @@
     "vscode": "^1.102.0"
   },
   "categories": [
-    "Other"
+    "Programming Languages"
   ],
   "activationEvents": [
     "onLanguage:html",

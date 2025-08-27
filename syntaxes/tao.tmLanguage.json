@@ -1,16 +1,15 @@
 {
-  "scopeName": "text.html.tao",
-  "injectionSelector": "L:text.html.basic",
+  "scopeName": "source.tao",
+  "injectionSelector": "L:text.html",
   "patterns": [
     {
-      "name": "meta.tag.tao",
-      "begin": "<%",
-      "end": "%>",
+      "begin": "(<%[=~]?)",
       "beginCaptures": {
-        "0": { "name": "punctuation.definition.tag.begin.tao" }
+        "1": { "name": "keyword.control.tao" }
       },
+      "end": "(%>)",
       "endCaptures": {
-        "0": { "name": "punctuation.definition.tag.end.tao" }
+        "1": { "name": "keyword.control.tao" }
       },
       "patterns": [{ "include": "source.js" }]
     }

@@ -1,17 +1,15 @@
 # TAO Template Language Support
 
-A Visual Studio Code extension that adds **language support** for the [TAO template engine](https://github.com/GreenFlag31/node-tao).
-
-<!-- ici GIF -->
+A Visual Studio Code extension that adds **language support** for the [TAO template engine](https://github.com/GreenFlag31/node-tao). Node-tao is a Nodejs template engine that focuses on performance, security, and developer experience.
 
 ## ✨ Features
 
 - **Tag completion** – Autocompletion for TAO template tags.
 - **Include support** – Suggestions and signature help for `include(...)`.
-- **Control structures** – Snippets and completions for `if`, `for`, `for-in`, and `for-of` with tags.
+- **Control structures** – Snippets and completions for `if`, `for`, `for-in`, and `for-of` with tags with syntax colors for html files.
 - **User data injection** – Autocompletion for variables and helpers injected in the template.
 - **Template names provider** – An `include` will suggest child templates of your project.
-- **Template navigation** – Go to the file definition for an embedded child template in an `include`.
+- **Template navigation** – Go to the file definition for an embedded child template in an `include`, hover to get the complete filepath.
 
 ## 📂 Configuration
 
@@ -48,8 +46,6 @@ The data will be available **after** a specific render take place, since it has 
 
 - Initial release with completions, includes, tags, signature.
 
----
-
 ## 🔧 Contributing
 
 Issues and pull requests are welcome!  
@@ -58,42 +54,3 @@ Issues and pull requests are welcome!
 ## 📄 License
 
 [MIT](LICENSE)
-
-## Extension Settings
-
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
-
-For example:
-
-This extension contributes the following settings:
-
-- `myExtension.enable`: Enable/disable this extension.
-- `myExtension.thing`: Set to `blah` to do something.
-
-## Known Issues
-
-Calling out known issues can help limit users opening duplicate issues against your extension.
-
-## Release Notes
-
-Users appreciate release notes as you update your extension.
-
-### 1.0.0
-
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
-
----
-
-## Following extension guidelines
-
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
-
-- [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)

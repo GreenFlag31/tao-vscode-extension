@@ -45,7 +45,6 @@ function getTemplateLinkProvider() {
         word
       );
 
-      log('word: ', word, 'and reference : ', completeTemplatePath);
       if (!completeTemplatePath) return;
 
       return new vscode.Location(vscode.Uri.file(completeTemplatePath), new vscode.Position(0, 0));

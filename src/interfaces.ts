@@ -4,7 +4,7 @@ export interface Options {
   /**
    * The directory containing your template files.
    */
-  // views: string;
+  views: string;
   /**
    * Exec, interpolate, and raw configuration.
    */
@@ -78,6 +78,7 @@ export interface InitValues {
   openingWithInterpolate: string;
   openingWithRaw: string;
   opening: string;
+  views: string;
 }
 
 export interface CompletionItemSnippetData {

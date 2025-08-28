@@ -15,18 +15,21 @@ A Visual Studio Code extension that adds **language support** for the [TAO templ
 
 ## 📂 Configuration
 
-If you want to use a configuration that differs from the default options, configure your options by providing a `tao.config.js` file at root scope of your project.
+If you want to use a configuration that differs from the default options, configure your options by providing a `tao.config.mjs` file at root scope of your project and export them as default.
 
 ```javascript
 /**
- * @type {import('node-tao-extension').Options}
+ * @type {import('tao-vscode-extension').Options}
  * These are the default options.
  */
 const options = {
-  extension: 'html',
-  parse: { exec: '', interpolate: '=', raw: '~' },
-  tags: { opening: '<%', closing: '%>' },
+  extension: 'html', // extension of your template files
+  parse: { exec: '', interpolate: '=', raw: '~' }, // parse configuration
+  tags: { opening: '<%', closing: '%>' }, // tags configuration
+  views: 'src', // folder where the template files are stored
 };
+
+export default options;
 ```
 
 ## 🚀 Injected data in templates
@@ -45,6 +48,25 @@ const result = tao.render(
 ![Variable](https://raw.githubusercontent.com/GreenFlag31/tao-vscode-extension/assets/injected-data.gif)
 
 The data will be available **after** a specific render take place, since it has to be first injected.
+
+## 🎨 Customize TAO tags colors
+
+If you wish to change the colors of the tags, provide the following configuration in the `settings.json` file in the settings of vscode.
+
+```json
+"editor.tokenColorCustomizations": {
+  "textMateRules": [
+    {
+      "scope": "punctuation.section.embedded.begin.tao",
+      "settings": { "foreground": "#4faf43" }
+    },
+    {
+      "scope": "punctuation.section.embedded.end.tao",
+      "settings": { "foreground": "#4faf43" }
+    }
+  ]
+}
+```
 
 ## 📝 Release Notes
 

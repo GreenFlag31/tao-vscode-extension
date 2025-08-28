@@ -17,11 +17,12 @@ import {
   getIncludeWithTagsProvider,
 } from '../tags/providers.js';
 import { getInjectedUserDataProvider } from '../user-data/providers.js';
+import { log } from 'node:console';
 
 let values: InitValues;
 
 function createInitOptionsWatcher() {
-  const initOptionsWatcher = vscode.workspace.createFileSystemWatcher(`**/tao.config.js`);
+  const initOptionsWatcher = vscode.workspace.createFileSystemWatcher(`**/tao.config.mjs`);
 
   initOptionsWatcher.onDidCreate(() => getInitValues());
   initOptionsWatcher.onDidChange(() => getInitValues('update'));
@@ -34,7 +35,8 @@ async function getInitOptions(): Promise<InitReturn> {
   const failedInit = { success: false, options: DEFAULT_OPTIONS };
 
   try {
-    const options = await vscode.workspace.findFiles('**/tao.config.js', '**/node_modules/**');
+    // transfo en mjs
+    const options = await vscode.workspace.findFiles('**/tao.config.mjs', '**/node_modules/**');
     if (options.length === 0) return failedInit;
     if (options.length > 1) {
       vscode.window.showWarningMessage('Multiple TAO configuration files found');
@@ -88,7 +90,7 @@ function isAValidConfiguration(optionsProvided: Options): optionsProvided is Opt
 
 async function getInitValues(typeUpdate: 'none' | 'update' = 'none') {
   const { success, options } = await getInitOptions();
-  const { extension, parse, tags } = options;
+  const { extension, parse, tags, views } = options;
   const { opening, closing } = tags;
   const { exec, interpolate, raw } = parse;
 
@@ -102,7 +104,7 @@ async function getInitValues(typeUpdate: 'none' | 'update' = 'none') {
   const openingAndClosingRaw = `${openingWithRaw} ${closing}`;
 
   if (success && typeUpdate === 'update') {
-    vscode.window.showInformationMessage('✔️ Configuration successfully updated');
+    vscode.window.showInformationMessage('✔️ Tao configuration successfully updated');
   }
 
   values = {
@@ -115,6 +117,7 @@ async function getInitValues(typeUpdate: 'none' | 'update' = 'none') {
     openingWithInterpolate,
     openingWithRaw,
     opening,
+    views,
   };
 }
 
@@ -123,19 +126,19 @@ function initProviders() {
 
   const includeProvider = getIncludeProvider();
 
+  const includeWithTagsProvider = getIncludeWithTagsProvider();
+
   const includeSignatureProvider = getIncludeSignatureProvider();
 
   const ifWithTagsProvider = getIfWithTagsProvider();
 
-  const injectedUserDataProvider = getInjectedUserDataProvider();
-
   const forWithTagsProvider = getForWithTagsProvider();
-
-  const forInWithTagsProvider = getForInWithTagsProvider();
 
   const forOfWithTagsProvider = getForOfWithTagsProvider();
 
-  const includeWithTagsProvider = getIncludeWithTagsProvider();
+  const forInWithTagsProvider = getForInWithTagsProvider();
+
+  const injectedUserDataProvider = getInjectedUserDataProvider();
 
   const templatesNameProvider = getTemplatesNameProvider();
 

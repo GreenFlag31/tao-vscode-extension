@@ -21,7 +21,7 @@ const DEFAULT_OPTIONS: Options = {
     opening: DEFAULT_OPENING,
     closing: DEFAULT_CLOSING,
   },
-  // views: DEFAULT_VIEWS,
+  views: DEFAULT_VIEWS,
 };
 
 export {

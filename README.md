@@ -15,7 +15,7 @@ A Visual Studio Code extension that adds **language support** for the [TAO templ
 
 ## 📂 Configuration
 
-If you want to use a configuration that differs from the default options, configure your options by providing a `tao.config.mjs` file at root scope of your project and export them as default.
+If you want to override the default options, create a `tao.config.mjs` file at the root of your project and export your configuration as the default.
 
 ```javascript
 /**

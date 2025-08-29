@@ -9,8 +9,7 @@
         "1": { "name": "punctuation.section.embedded.begin.tao" }
       },
       "end": "(?=%>)",
-      "patterns": [{ "include": "source.js" }],
-      "applyEndPatternLast": 0
+      "patterns": [{ "include": "source.js" }]
     },
     {
       "match": "%>",

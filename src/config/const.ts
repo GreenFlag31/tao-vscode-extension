@@ -8,7 +8,7 @@ const DEFAULT_EXEC = '';
 const DEFAULT_INTERPOLATE = '=';
 const DEFAULT_RAW = '~';
 
-const DEFAULT_VIEWS = process.cwd();
+const DEFAULT_VIEWS = 'src';
 
 const DEFAULT_OPTIONS: Options = {
   extension: DEFAULT_EXTENSION,

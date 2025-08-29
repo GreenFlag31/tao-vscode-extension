@@ -35,7 +35,6 @@ async function getInitOptions(): Promise<InitReturn> {
   const failedInit = { success: false, options: DEFAULT_OPTIONS };
 
   try {
-    // transfo en mjs
     const options = await vscode.workspace.findFiles('**/tao.config.mjs', '**/node_modules/**');
     if (options.length === 0) return failedInit;
     if (options.length > 1) {

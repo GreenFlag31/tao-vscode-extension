@@ -26,7 +26,7 @@ const options = {
   extension: 'html', // extension of your template files
   parse: { exec: '', interpolate: '=', raw: '~' }, // parse configuration
   tags: { opening: '<%', closing: '%>' }, // tags configuration
-  views: 'src', // folder where the template files are stored
+  views: 'src', // folder where template files are stored
 };
 
 export default options;
@@ -45,7 +45,7 @@ const result = tao.render(
 );
 ```
 
-![Variable](https://raw.githubusercontent.com/GreenFlag31/tao-vscode-extension/assets/injected-data.gif)
+![Variable](https://raw.githubusercontent.com/GreenFlag31/tao-vscode-extension/assets/variable.png)
 
 The data will be available **after** a specific render take place, since it has to be first injected.
 
@@ -68,7 +68,9 @@ If you wish to change the colors of the tags, provide the following configuratio
 }
 ```
 
-## 📝 Release Notes
+## 🛠️ Requirements
+
+Requires v0.0.3 of [node-tao](https://www.npmjs.com/package/node-tao) or higher.
 
 ### 0.1.0
 

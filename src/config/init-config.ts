@@ -17,7 +17,6 @@ import {
   getIncludeWithTagsProvider,
 } from '../tags/providers.js';
 import { getInjectedUserDataProvider } from '../user-data/providers.js';
-import { log } from 'node:console';
 
 let values: InitValues;
 

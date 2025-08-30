@@ -32,6 +32,7 @@
     "lint": "eslint src",
     "test": "vscode-test",
     "compile": "npm run check-types && node esbuild.js",
+    "watch:esbuild": "node esbuild.js --watch",
     "vscode:prepublish": "npm run package",
     "package": "npm run check-types && node esbuild.js --production"
   },

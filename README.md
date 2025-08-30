@@ -2,7 +2,7 @@
 
 A Visual Studio Code extension that adds **language support** for the [TAO template engine](https://github.com/GreenFlag31/node-tao). Node-tao is a Nodejs template engine that focuses on performance, security, and developer experience.
 
-![Presentation](https://raw.githubusercontent.com/GreenFlag31/tao-vscode-extension/assets/presentation.gif)
+![Presentation](https://raw.githubusercontent.com/GreenFlag31/tao-vscode-extension/main/assets/presentation.gif)
 
 ## ✨ Features
 
@@ -45,7 +45,7 @@ const result = tao.render(
 );
 ```
 
-![Variable](https://raw.githubusercontent.com/GreenFlag31/tao-vscode-extension/assets/variable.png)
+![Variable](https://raw.githubusercontent.com/GreenFlag31/tao-vscode-extension/main/assets/variable.png)
 
 The data will be available **after** a specific render take place, since it has to be first injected.
 

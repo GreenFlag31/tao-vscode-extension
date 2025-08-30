@@ -1,8 +1,10 @@
 {
   "name": "tao-vscode-extension",
+  "displayName": "tao-vscode-extension",
   "description": "Official node-tao template engine extension",
   "version": "0.0.1",
   "type": "module",
+  "main": "./dist/extension.js",
   "engines": {
     "vscode": "^1.102.0"
   },
@@ -13,7 +15,8 @@
     "onLanguage:html",
     "onLanguage:javascript"
   ],
-  "main": "./out/extension.js",
+  "publisher": "ManuC",
+  "icon": "./assets/node-tao.jpg",
   "contributes": {
     "grammars": [
       {

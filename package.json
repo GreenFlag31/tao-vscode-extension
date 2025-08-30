@@ -16,7 +16,7 @@
     "onLanguage:javascript"
   ],
   "publisher": "ManuC",
-  "icon": "./assets/node-tao.jpg",
+  "icon": "assets/node-tao.jpg",
   "contributes": {
     "grammars": [
       {

@@ -74,9 +74,21 @@ If you wish to change the colors of the tags, provide the following configuratio
 
 Requires v0.0.3 of [node-tao](https://www.npmjs.com/package/node-tao) or higher.
 
-### 0.1.0
+## 📜 ChangeLogs
 
-- Initial release with completions, includes, tags, signature.
+<details>
+  <summary>0.0.1</summary>
+
+Initial release with completions, includes, tags, signature.
+
+</details>
+
+<details>
+  <summary>0.0.2</summary>
+
+Syntax color corrections, corrections of `for loop` and `for in` variable autocompletion interpolation.
+
+</details>
 
 ## 🔧 Contributing
 

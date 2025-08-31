@@ -127,8 +127,12 @@ function getForWithTagsProvider() {
           values.openingWithEvaluation +
           ' for (let ${1:index} = 0; ${1} < ${2:array}.length; ${1}++) { ' +
           values.closing +
-          '\n  const ${3:element} = ${2}[${1}];\n' +
-          '  ${4}\n' +
+          '\n\t' +
+          values.openingWithInterpolate +
+          ' const ${3:element} = ${2}[${1}];' +
+          ' ${4}' +
+          values.closing +
+          '\n' +
           values.openingWithEvaluation +
           ' } ' +
           values.closing;
@@ -170,9 +174,16 @@ function getForInWithTagsProvider() {
           values.openingWithEvaluation +
           ' for (const ${1:key} in ${2:object}) { ' +
           values.closing +
-          '\n  if (${2}.hasOwnProperty(${1})) {\n' +
-          '    ${3}\n' +
-          '  }\n' +
+          '\n\t' +
+          values.openingWithEvaluation +
+          ' if (${2}.hasOwnProperty(${1})) {' +
+          values.closing +
+          '\n' +
+          '\t\t${3}\n\t' +
+          values.openingWithEvaluation +
+          ' } ' +
+          values.closing +
+          '\n' +
           values.openingWithEvaluation +
           ' } ' +
           values.closing;

@@ -1,0 +1,37 @@
+{
+  "scopeName": "source.tao.lightjs",
+  "patterns": [
+    {
+      "match": "\\w+(?=\\()",
+      "name": "entity.name.function.tao"
+    },
+    {
+      "match": "(?<=\\()\\b(?:let|const|var)\\b",
+      "name": "storage.type.js"
+    },
+    {
+      "match": "\\b(?:let|const|var|return|if|else|for|while|do|switch|case|break|continue|try|catch|finally|throw|new|typeof|instanceof)\\b",
+      "name": "keyword.control.tao"
+    },
+    {
+      "match": "\\b(?:true|false|null|undefined)\\b",
+      "name": "constant.language.tao"
+    },
+    {
+      "match": "[+\\-*/=<>!]+",
+      "name": "keyword.operator.tao"
+    },
+    {
+      "match": "\\d+(?:\\.\\d+)?",
+      "name": "constant.numeric.tao"
+    },
+    {
+      "match": "['\"`].*?['\"`]",
+      "name": "string.quoted.tao"
+    },
+    {
+      "match": "\\b(?:[a-zA-Z_][a-zA-Z0-9_]*)\\b",
+      "name": "variable.other.tao"
+    }
+  ]
+}

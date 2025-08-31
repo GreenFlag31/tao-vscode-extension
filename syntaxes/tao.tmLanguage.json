@@ -1,6 +1,6 @@
 {
   "scopeName": "source.tao",
-  "injectionSelector": "L:text.html - string - comment - meta.tag",
+  "injectionSelector": "L:text.html",
   "patterns": [
     {
       "name": "meta.embedded.block.tao",
@@ -8,12 +8,11 @@
       "beginCaptures": {
         "1": { "name": "punctuation.section.embedded.begin.tao" }
       },
-      "end": "(?=%>)",
-      "patterns": [{ "include": "source.js" }]
-    },
-    {
-      "match": "%>",
-      "name": "punctuation.section.embedded.end.tao"
+      "end": "%>",
+      "endCaptures": {
+        "0": { "name": "punctuation.section.embedded.end.tao" }
+      },
+      "patterns": [{ "include": "source.tao.lightjs" }]
     }
   ]
 }

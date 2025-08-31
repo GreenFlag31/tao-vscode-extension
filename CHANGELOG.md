@@ -1,9 +1,9 @@
 # Change Log
 
-All notable changes to the "node-tao" extension will be documented in this file.
+## [0.0.1] - 2025-08-31
 
-Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
+- Initial release with completions, includes, tags, signature.
 
-## [Unreleased]
+## [0.0.2] - 2025-08-31
 
-- Initial release
+- Syntax color corrections, corrections of `for loop` and `for in` variable autocompletion interpolation.

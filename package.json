@@ -13,6 +13,7 @@
   ],
   "publisher": "ManuC",
   "icon": "assets/node-tao.jpg",
+  "types": "index.d.ts",
   "repository": {
     "type": "git",
     "url": "https://github.com/GreenFlag31/tao-vscode-extension.git"

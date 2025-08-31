@@ -49,6 +49,8 @@ const result = tao.render(
 
 The data will be available **after** a specific render take place, since it has to be first injected.
 
+_NB: Injected data is available only by setting Node-TAO in development mode._
+
 ## 🎨 Customize TAO tags colors
 
 If you wish to change the colors of the tags, provide the following configuration in the `settings.json` file in the settings of vscode.

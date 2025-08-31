@@ -83,4 +83,4 @@ Issues and pull requests are welcome!
 
 ## 📄 License
 
-[MIT](LICENSE)
+[MIT](https://github.com/GreenFlag31/tao-vscode-extension/blob/main/LICENSE)

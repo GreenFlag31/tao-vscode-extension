@@ -4,9 +4,9 @@
   "patterns": [
     {
       "name": "meta.embedded.block.tao",
-      "begin": "(<%[=~]?)",
+      "begin": "<%[=~]?",
       "beginCaptures": {
-        "1": { "name": "punctuation.section.embedded.begin.tao" }
+        "0": { "name": "punctuation.section.embedded.begin.tao" }
       },
       "end": "%>",
       "endCaptures": {

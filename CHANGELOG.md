@@ -7,3 +7,7 @@
 ## [0.0.2] - 2025-08-31
 
 - Syntax color corrections, corrections of `for loop` and `for in` variable autocompletion interpolation.
+
+## [0.0.3] - 2025-09-03
+
+- Syntax color improvements.

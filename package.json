@@ -4,7 +4,7 @@
   "description": "Official node-tao template engine extension",
   "version": "0.0.2",
   "type": "module",
-  "main": "./dist/extension.js",
+  "main": "./out/extension.js",
   "engines": {
     "vscode": "^1.102.0"
   },

@@ -83,7 +83,7 @@ function getVariableHoverProvider() {
         const nameEscaped = `\\b${escapeRegExp(name)}\\b`;
         const nameRegex = new RegExp(nameEscaped);
         const wordRangeName = document.getWordRangeAtPosition(position, nameRegex);
-        if (!wordRangeName) return undefined;
+        if (!wordRangeName) continue;
 
         return new vscode.Hover(
           new vscode.MarkdownString(

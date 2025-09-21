@@ -1,8 +1,9 @@
 import * as vscode from 'vscode';
-import { createCompletionItemSnippet } from '../utils.js';
+import { createCompletionItemSnippet, escapeRegExp } from '../utils.js';
 import { getCurrentInjectedData, injectedUserData } from './helpers.js';
 import { CompletionItemSnippetData } from '../interfaces.js';
 import { values } from '../config/init-config.js';
+import { log } from 'console';
 
 function getInjectedUserDataProvider() {
   const injectedUserDataProvider = vscode.languages.registerCompletionItemProvider(
@@ -69,4 +70,40 @@ function getInjectedUserDataProvider() {
   return injectedUserDataProvider;
 }
 
-export { getInjectedUserDataProvider };
+function getVariableHoverProvider() {
+  const hoverProvider = vscode.languages.registerHoverProvider(values.extension, {
+    provideHover(document, position) {
+      const currentData = getCurrentInjectedData(injectedUserData, document.fileName);
+      if (!currentData) return;
+      const { variables, helpers } = currentData;
+
+      for (const variable of variables) {
+        const { name, type } = variable;
+
+        const nameEscaped = `\\b${escapeRegExp(name)}\\b`;
+        const nameRegex = new RegExp(nameEscaped);
+        const wordRangeName = document.getWordRangeAtPosition(position, nameRegex);
+        if (!wordRangeName) return undefined;
+
+        return new vscode.Hover(
+          new vscode.MarkdownString(
+            [
+              '### Injected Variable',
+              '',
+              `**Name:** \`${name}\``,
+              `**Type:** \`${type}\``,
+              '',
+              'Available in the current template context.',
+            ].join('\n')
+          )
+        );
+      }
+
+      // faire les helpers
+    },
+  });
+
+  return hoverProvider;
+}
+
+export { getInjectedUserDataProvider, getVariableHoverProvider };

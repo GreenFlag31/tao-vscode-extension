@@ -69,8 +69,11 @@ export interface UserData {
 }
 
 export interface InitValues {
-  openingAndClosingEvaluated: string;
-  openingAndClosingInterpolated: string;
+  exec: string;
+  interpolate: string;
+  raw: string;
+  openingAndClosingEvaluation: string;
+  openingAndClosingInterpolation: string;
   openingAndClosingRaw: string;
   closing: string;
   extension: string;

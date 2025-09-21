@@ -3,11 +3,15 @@ import { pathToFileURL } from 'node:url';
 import { Options, InitValues, InitReturn } from '../interfaces.js';
 import { DEFAULT_OPTIONS } from './const.js';
 import {
-  getHoverProvider,
   getTemplateLinkProvider,
+  getTemplateNameHoverProvider,
   getTemplatesNameProvider,
 } from '../templates/providers.js';
-import { getIncludeProvider, getIncludeSignatureProvider } from '../include/providers.js';
+import {
+  getIncludeHoverProvider,
+  getIncludeProvider,
+  getIncludeSignatureProvider,
+} from '../include/providers.js';
 import {
   getTagsProvider,
   getIfWithTagsProvider,
@@ -15,8 +19,9 @@ import {
   getForInWithTagsProvider,
   getForOfWithTagsProvider,
   getIncludeWithTagsProvider,
+  getTagsHoverProvider,
 } from '../tags/providers.js';
-import { getInjectedUserDataProvider } from '../user-data/providers.js';
+import { getInjectedUserDataProvider, getVariableHoverProvider } from '../user-data/providers.js';
 
 let values: InitValues;
 
@@ -93,10 +98,10 @@ async function getInitValues(typeUpdate: 'none' | 'update' = 'none') {
   const { exec, interpolate, raw } = parse;
 
   const openingWithEvaluation = opening + exec;
-  const openingAndClosingEvaluated = `${openingWithEvaluation} ${closing}`;
+  const openingAndClosingEvaluation = `${openingWithEvaluation} ${closing}`;
 
   const openingWithInterpolate = opening + interpolate;
-  const openingAndClosingInterpolated = `${openingWithInterpolate} ${closing}`;
+  const openingAndClosingInterpolation = `${openingWithInterpolate} ${closing}`;
 
   const openingWithRaw = opening + raw;
   const openingAndClosingRaw = `${openingWithRaw} ${closing}`;
@@ -106,8 +111,8 @@ async function getInitValues(typeUpdate: 'none' | 'update' = 'none') {
   }
 
   values = {
-    openingAndClosingEvaluated,
-    openingAndClosingInterpolated,
+    openingAndClosingEvaluation,
+    openingAndClosingInterpolation,
     openingAndClosingRaw,
     closing,
     extension,
@@ -116,13 +121,20 @@ async function getInitValues(typeUpdate: 'none' | 'update' = 'none') {
     openingWithRaw,
     opening,
     views,
+    exec,
+    interpolate,
+    raw,
   };
 }
 
 function initProviders() {
   const tagsProvider = getTagsProvider();
 
+  const tagsHoverProvider = getTagsHoverProvider();
+
   const includeProvider = getIncludeProvider();
+
+  const includeHoverProvider = getIncludeHoverProvider();
 
   const includeWithTagsProvider = getIncludeWithTagsProvider();
 
@@ -138,11 +150,13 @@ function initProviders() {
 
   const injectedUserDataProvider = getInjectedUserDataProvider();
 
+  const variableHoverProvider = getVariableHoverProvider();
+
   const templatesNameProvider = getTemplatesNameProvider();
 
   const templateLinkProvider = getTemplateLinkProvider();
 
-  const hoverProvider = getHoverProvider();
+  const templateNamehoverProvider = getTemplateNameHoverProvider();
 
   return [
     tagsProvider,
@@ -155,8 +169,11 @@ function initProviders() {
     includeSignatureProvider,
     templatesNameProvider,
     templateLinkProvider,
-    hoverProvider,
+    templateNamehoverProvider,
     includeWithTagsProvider,
+    tagsHoverProvider,
+    includeHoverProvider,
+    variableHoverProvider,
   ];
 }
 

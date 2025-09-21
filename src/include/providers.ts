@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import {
   createCompletionItemSnippet,
+  escapeRegExp,
   getLineTextUntilPosition,
   isCursorInsideCompletionItemGlobal,
 } from '../utils.js';
@@ -89,4 +90,44 @@ function getIncludeSignatureProvider() {
   return signatureProvider;
 }
 
-export { getIncludeProvider, getIncludeSignatureProvider };
+function getIncludeHoverProvider() {
+  const hoverProvider = vscode.languages.registerHoverProvider(values.extension, {
+    provideHover(document, position) {
+      const includeRegex = new RegExp(/\binclude\b/);
+      const wordRangeInclude = document.getWordRangeAtPosition(position, includeRegex);
+
+      if (!wordRangeInclude) return undefined;
+
+      return new vscode.Hover(
+        new vscode.MarkdownString(
+          [
+            '### TAO `include` Function',
+            '',
+            '```ts',
+            'render(template: string, data: Data = {}, helpers: Helpers = {}): string',
+            '```',
+            '',
+            '**Includes** a child template inside the current template.',
+            'Children automatically inherit `data` and `helpers` from the parent.',
+            '',
+            '**Example:**',
+            '```html',
+            '<!-- parent.html -->',
+            '<h1><%= title %></h1>',
+            "<div><%~ include('child.html', { subtitle: 'Hello' }) %></div>",
+            '```',
+            '',
+            '```html',
+            '<!-- child.html -->',
+            '<h2><%= subtitle %></h2>',
+            '```',
+          ].join('\n')
+        )
+      );
+    },
+  });
+
+  return hoverProvider;
+}
+
+export { getIncludeProvider, getIncludeSignatureProvider, getIncludeHoverProvider };

@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import {
   createCompletionItemSnippet,
+  escapeRegExp,
   getLineTextUntilPosition,
   isCursorInsideCompletionItemGlobal,
 } from '../utils.js';
@@ -25,10 +26,10 @@ function getTagsProvider() {
           : new vscode.Range(position, position);
 
         const evalItemData: CompletionItemSnippetData = {
-          name: values.openingAndClosingEvaluated,
+          name: values.openingAndClosingEvaluation,
           insertText: values.openingWithEvaluation + ' ${1} ' + values.closing,
           label: {
-            label: values.openingAndClosingEvaluated,
+            label: values.openingAndClosingEvaluation,
             detail: ' Evaluation – JS execution',
             description: 'TAO',
           },
@@ -38,10 +39,10 @@ function getTagsProvider() {
         };
 
         const interpolationItemData: CompletionItemSnippetData = {
-          name: values.openingAndClosingInterpolated,
+          name: values.openingAndClosingInterpolation,
           insertText: values.openingWithInterpolate + ' ${1} ' + values.closing,
           label: {
-            label: values.openingAndClosingInterpolated,
+            label: values.openingAndClosingInterpolation,
             detail: ' Interpolation – escaped output',
             description: 'TAO',
           },
@@ -284,6 +285,70 @@ function getIncludeWithTagsProvider() {
   return forOfWithTagsProvider;
 }
 
+function getTagsHoverProvider() {
+  const hoverProvider = vscode.languages.registerHoverProvider(values.extension, {
+    provideHover(document, position) {
+      // default: /<%[^=~]|%>/
+      const escapedOpening = escapeRegExp(values.opening);
+      const escapedInterpolation = escapeRegExp(values.interpolate);
+      const escapedRaw = escapeRegExp(values.raw);
+
+      const evalRegex = `${escapedOpening}[^${escapedInterpolation}${escapedRaw}]`;
+      const openingEvalRegex = new RegExp(evalRegex);
+
+      const wordRangeEval = document.getWordRangeAtPosition(position, openingEvalRegex);
+      if (wordRangeEval) {
+        return new vscode.Hover(
+          new vscode.MarkdownString(
+            [
+              '### TAO Evaluation Tag',
+              '',
+              `'${values.opening} ... ${values.closing}' — ⚠️ Runs inline **JavaScript code** inside the template.`,
+            ].join('\n')
+          )
+        );
+      }
+
+      const escapedOpeningInterpolation = escapeRegExp(values.openingWithInterpolate);
+      const openingInterpolateRegex = new RegExp(escapedOpeningInterpolation);
+      const wordRangeInterpolate = document.getWordRangeAtPosition(
+        position,
+        openingInterpolateRegex
+      );
+      if (wordRangeInterpolate) {
+        return new vscode.Hover(
+          new vscode.MarkdownString(
+            [
+              '### TAO Interpolation Tag',
+              '',
+              `\`${values.openingWithInterpolate} ... ${values.closing}\` — ✅ Inserts **evaluated values** directly into the template output.`,
+            ].join('\n')
+          )
+        );
+      }
+
+      const escapedOpeningRaw = escapeRegExp(values.openingWithRaw);
+      const openingRawRegex = new RegExp(escapedOpeningRaw);
+      const wordRangeRaw = document.getWordRangeAtPosition(position, openingRawRegex);
+      if (wordRangeRaw) {
+        return new vscode.Hover(
+          new vscode.MarkdownString(
+            [
+              '### TAO Interpolation Tag',
+              '',
+              `\`${values.openingWithRaw} ... ${values.closing}\` — ✅ Inserts **raw HTML** directly into the template output.`,
+            ].join('\n')
+          )
+        );
+      }
+
+      return undefined;
+    },
+  });
+
+  return hoverProvider;
+}
+
 export {
   getTagsProvider,
   getIfWithTagsProvider,
@@ -291,4 +356,5 @@ export {
   getForInWithTagsProvider,
   getForOfWithTagsProvider,
   getIncludeWithTagsProvider,
+  getTagsHoverProvider,
 };

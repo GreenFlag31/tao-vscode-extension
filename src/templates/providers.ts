@@ -6,7 +6,6 @@ import {
   findTemplateAccordingToTheNameClicked,
   getTemplateNameFromTemplateInclude,
 } from './helpers.js';
-import { log } from 'node:console';
 import { isInFirstIncludeArgument } from '../include/helpers.js';
 import { values } from '../config/init-config.js';
 
@@ -54,7 +53,7 @@ function getTemplateLinkProvider() {
   return templateLinkProvider;
 }
 
-function getHoverProvider() {
+function getTemplateNameHoverProvider() {
   const hoverProvider = vscode.languages.registerHoverProvider(values.extension, {
     provideHover(document, position) {
       const word = getTemplateNameFromTemplateInclude(document, position);
@@ -75,4 +74,4 @@ function getHoverProvider() {
   return hoverProvider;
 }
 
-export { getTemplatesNameProvider, getTemplateLinkProvider, getHoverProvider };
+export { getTemplatesNameProvider, getTemplateLinkProvider, getTemplateNameHoverProvider };

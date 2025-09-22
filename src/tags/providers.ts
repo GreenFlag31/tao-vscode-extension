@@ -303,7 +303,7 @@ function getTagsHoverProvider() {
             [
               '### TAO Evaluation Tag',
               '',
-              `'${values.opening} ... ${values.closing}' — ⚠️ Runs inline **JavaScript code** inside the template.`,
+              `\`${values.opening} ... ${values.closing}\` — Runs inline **JavaScript code** inside the template.`,
             ].join('\n')
           )
         );
@@ -321,7 +321,7 @@ function getTagsHoverProvider() {
             [
               '### TAO Interpolation Tag',
               '',
-              `\`${values.openingWithInterpolate} ... ${values.closing}\` — ✅ Inserts **evaluated values** directly into the template output.`,
+              `\`${values.openingWithInterpolate} ... ${values.closing}\` — Inserts **evaluated values** directly into the template output.`,
             ].join('\n')
           )
         );
@@ -336,7 +336,7 @@ function getTagsHoverProvider() {
             [
               '### TAO Interpolation Tag',
               '',
-              `\`${values.openingWithRaw} ... ${values.closing}\` — ✅ Inserts **raw HTML** directly into the template output.`,
+              `\`${values.openingWithRaw} ... ${values.closing}\` —  Inserts **raw HTML** directly into the template output.`,
             ].join('\n')
           )
         );

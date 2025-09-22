@@ -3,7 +3,6 @@ import { createCompletionItemSnippet, escapeRegExp } from '../utils.js';
 import { getCurrentInjectedData, injectedUserData } from './helpers.js';
 import { CompletionItemSnippetData } from '../interfaces.js';
 import { values } from '../config/init-config.js';
-import { log } from 'console';
 
 function getInjectedUserDataProvider() {
   const injectedUserDataProvider = vscode.languages.registerCompletionItemProvider(
@@ -99,7 +98,28 @@ function getVariableHoverProvider() {
         );
       }
 
-      // faire les helpers
+      for (const helper of helpers) {
+        const { name, params } = helper;
+
+        const helperNameEscaped = `${escapeRegExp(name)}(\\.*)`;
+        const nameRegex = new RegExp(helperNameEscaped);
+        const wordRangeHelperName = document.getWordRangeAtPosition(position, nameRegex);
+        if (!wordRangeHelperName) continue;
+
+        return new vscode.Hover(
+          new vscode.MarkdownString(
+            [
+              '### Injected Helper Function',
+              '',
+              `**Name:** \`${name}\``,
+              `**Type:** \`Function\``,
+              `**Params:** \`${params}\``,
+              '',
+              'Available in the current template context.',
+            ].join('\n')
+          )
+        );
+      }
     },
   });
 

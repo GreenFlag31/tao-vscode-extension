@@ -2,7 +2,7 @@
   "name": "tao-vscode-extension",
   "displayName": "tao-vscode-extension",
   "description": "Official node-tao template engine extension",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "type": "module",
   "main": "./out/extension.js",
   "engines": {

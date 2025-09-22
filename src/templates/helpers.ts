@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 import { getFileName } from '../utils.js';
 import { values } from '../config/init-config.js';
-import { log } from 'node:console';
 
 let completeTemplatesPath: string[] = [];
 
@@ -19,7 +18,7 @@ function createTemplatesFilesWatcher() {
 async function getTemplatesFiles() {
   const completeTemplatesReferences: string[] = [];
   const templates = await vscode.workspace.findFiles(
-    `**/${values.views}/*.${values.extension}`,
+    `**/${values.views}/**/*.${values.extension}`,
     '**/node_modules/**'
   );
 
@@ -40,9 +39,7 @@ function excludeCurrentFileFromTemplatePropositions(
 
   const allOthersTemplates = completeTemplatesPath
     .map((template) => getFileName(template))
-    .filter((template) => {
-      return template !== fileName;
-    });
+    .filter((template) => template !== fileName);
 
   return allOthersTemplates;
 }

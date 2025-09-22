@@ -8,6 +8,6 @@
 
 - Syntax color corrections, corrections of `for loop` and `for in` variable autocompletion interpolation.
 
-## [0.0.3] - 2025-09-03
+## [0.0.3] - 2025-09-22
 
-- Syntax color improvements.
+- Syntax color improvements, hover DX template help, template inclusion bug correction.

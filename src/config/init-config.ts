@@ -80,7 +80,7 @@ function isAValidConfiguration(optionsProvided: Options): optionsProvided is Opt
       for (const key in defaultSubOptions) {
         if (typeof defaultSubOptions[key] !== typeof providedSubOptions[key]) {
           vscode.window.showWarningMessage(
-            `Invalid ${key} ${option} option in TAO configuration file provided`
+            `Invalid ${key} ${option} option in TAO configuration file provided`,
           );
           return false;
         }
@@ -148,7 +148,7 @@ function initProviders() {
 
   const forInWithTagsProvider = getForInWithTagsProvider();
 
-  const injectedUserDataProvider = getInjectedUserDataProvider();
+  // const injectedUserDataProvider = getInjectedUserDataProvider();
 
   const variableHoverProvider = getVariableHoverProvider();
 
@@ -162,7 +162,7 @@ function initProviders() {
     tagsProvider,
     includeProvider,
     ifWithTagsProvider,
-    injectedUserDataProvider,
+    // injectedUserDataProvider,
     forWithTagsProvider,
     forInWithTagsProvider,
     forOfWithTagsProvider,

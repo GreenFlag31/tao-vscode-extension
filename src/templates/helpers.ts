@@ -6,7 +6,7 @@ let completeTemplatesPath: string[] = [];
 
 function createTemplatesFilesWatcher() {
   const templatesFilesWatcher = vscode.workspace.createFileSystemWatcher(
-    `**/*.${values.extension}`
+    `**/*.${values.extension}`,
   );
   templatesFilesWatcher.onDidCreate(getTemplatesFiles);
   templatesFilesWatcher.onDidChange(getTemplatesFiles);
@@ -16,24 +16,17 @@ function createTemplatesFilesWatcher() {
 }
 
 async function getTemplatesFiles() {
-  const completeTemplatesReferences: string[] = [];
   const templates = await vscode.workspace.findFiles(
     `**/${values.views}/**/*.${values.extension}`,
-    '**/node_modules/**'
+    '**/node_modules/**',
   );
 
-  for (const template of templates) {
-    const { path } = template;
-
-    completeTemplatesReferences.push(path);
-  }
-
-  completeTemplatesPath = completeTemplatesReferences;
+  completeTemplatesPath = templates.map((template) => template.path);
 }
 
 function excludeCurrentFileFromTemplatePropositions(
   completeTemplatesPath: string[],
-  currentFile: string
+  currentFile: string,
 ) {
   const fileName = getFileName(currentFile);
 
@@ -66,7 +59,7 @@ function findTemplateAccordingToTheNameClicked(completeTemplatesPath: string[], 
 
 function getTemplateNameFromTemplateInclude(
   document: vscode.TextDocument,
-  position: vscode.Position
+  position: vscode.Position,
 ) {
   const wordRange = document.getWordRangeAtPosition(position, /["'`]([^"'`]+)["'`]/);
   const word = document.getText(wordRange).replace(/['"`]/g, '');

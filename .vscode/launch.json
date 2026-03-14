@@ -14,6 +14,7 @@
         "D:\\Manu\\Desktop\\Projets\\extension-test"
       ],
       "outFiles": ["${workspaceFolder}/out/**/*.js"],
+      "skipFiles": ["${workspaceFolder}/node_modules/**/*.js"],
       "preLaunchTask": "${defaultBuildTask}"
     }
   ]

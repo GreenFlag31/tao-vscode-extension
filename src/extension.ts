@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { createTemplatesFilesWatcher, getTemplatesFiles } from './templates/helpers.js';
 import { createInitOptionsWatcher, getInitValues, initProviders } from './config/init-config.js';
-import { processTemplateDocument } from './lexer/store.js';
+import { handleTypescript } from './virtualTS/helpers.js';
 
 // This method is called when your extension is activated
 async function activate(context: vscode.ExtensionContext) {
@@ -15,14 +15,12 @@ async function activate(context: vscode.ExtensionContext) {
 
   // Lex all visible template files at startup
   for (const document of vscode.workspace.textDocuments) {
-    processTemplateDocument(document);
+    await handleTypescript(document);
   }
 
   // Re-lex when switching to an already-opened template tab
-  const onActiveEditorListener = vscode.window.onDidChangeActiveTextEditor((editor) => {
-    if (!editor) return;
-
-    processTemplateDocument(editor.document);
+  const onActiveEditorListener = vscode.window.onDidChangeActiveTextEditor(async (editor) => {
+    await handleTypescript(editor?.document);
   });
 
   context.subscriptions.push(

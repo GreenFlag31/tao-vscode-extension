@@ -171,6 +171,7 @@ function templateLexer(rawExpression: string, tags: Tags, parse: Parse) {
 
     const content = rawExpression.slice(contentStart, cursor).trim();
     tokens.push({
+      id: tokens.length + 1,
       type: mode,
       value: content,
       line: blockLine,

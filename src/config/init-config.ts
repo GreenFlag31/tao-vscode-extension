@@ -21,7 +21,7 @@ import {
   getIncludeWithTagsProvider,
   getTagsHoverProvider,
 } from '../tags/providers.js';
-import { getInjectedUserDataProvider, getVariableHoverProvider } from '../user-data/providers.js';
+import { getVariableHoverProvider } from '../user-data/providers.js';
 
 let values: InitValues;
 

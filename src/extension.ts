@@ -1,10 +1,17 @@
 import * as vscode from 'vscode';
 import { createTemplatesFilesWatcher, getTemplatesFiles } from './templates/helpers.js';
 import { createInitOptionsWatcher, getInitValues, initProviders } from './config/init-config.js';
-import { handleTypescript } from './virtualTS/helpers.js';
+import {
+  handleTypescript,
+  tsDiagnosticCollection,
+  getTsHoverProvider,
+  getTsCompletionProvider,
+} from './virtualTS/helpers.js';
 
 // This method is called when your extension is activated
 async function activate(context: vscode.ExtensionContext) {
+  let debounceTimer: NodeJS.Timeout | undefined;
+
   await getInitValues();
   const initOptionsWatcher = createInitOptionsWatcher();
 
@@ -18,9 +25,19 @@ async function activate(context: vscode.ExtensionContext) {
     await handleTypescript(document);
   }
 
-  // Re-lex when switching to an already-opened template tab
+  // Re-lex when switching to a template tab
   const onActiveEditorListener = vscode.window.onDidChangeActiveTextEditor(async (editor) => {
     await handleTypescript(editor?.document);
+  });
+
+  const tsHoverProvider = getTsHoverProvider();
+
+  const tsCompletionProvider = getTsCompletionProvider();
+
+  // when the user types in a template file, re-lex and update the virtual ts file after a short delay (debounce)
+  const onChangeListener = vscode.workspace.onDidChangeTextDocument((event) => {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => handleTypescript(event.document), 1000);
   });
 
   context.subscriptions.push(
@@ -28,6 +45,10 @@ async function activate(context: vscode.ExtensionContext) {
     initOptionsWatcher,
     templatesFilesWatcher,
     onActiveEditorListener,
+    onChangeListener,
+    tsDiagnosticCollection,
+    tsHoverProvider,
+    tsCompletionProvider,
   );
 }
 

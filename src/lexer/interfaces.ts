@@ -39,7 +39,3 @@ export interface Parse {
    */
   raw: string;
 }
-
-export interface TemplateQuotePosition {
-  line: number;
-}

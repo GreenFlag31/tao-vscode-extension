@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 import {
   createCompletionItemSnippet,
-  escapeRegExp,
   getLineTextUntilPosition,
   isCursorInsideCompletionItemGlobal,
 } from '../utils.js';
@@ -35,7 +34,7 @@ function getIncludeProvider() {
         return include;
       },
     },
-    'i'
+    'i',
   );
 
   return includeProvider;
@@ -58,17 +57,17 @@ function getIncludeSignatureProvider() {
 
         const sig = new vscode.SignatureInformation(
           'include(template: string, data?: object, helper?: object)',
-          'Includes a child template with optional context and helper functions.'
+          'Includes a child template with optional context and helper functions.',
         );
         sig.parameters = [
           new vscode.ParameterInformation('template', 'Template name'),
           new vscode.ParameterInformation(
             'data',
-            'Object containing local variables. Children inherit data from the parent component.'
+            'Object containing local variables. Children inherit data from the parent component.',
           ),
           new vscode.ParameterInformation(
             'helper',
-            'Object containing helper functions. Children inherit helper functions from the parent component.'
+            'Object containing helper functions. Children inherit helper functions from the parent component.',
           ),
         ];
         const MAX_TWO_PARAM = sig.parameters.length - 1;
@@ -84,7 +83,7 @@ function getIncludeSignatureProvider() {
       },
     },
     '(',
-    ','
+    ',',
   );
 
   return signatureProvider;
@@ -121,8 +120,8 @@ function getIncludeHoverProvider() {
             '<!-- child.html -->',
             '<h2><%= subtitle %></h2>',
             '```',
-          ].join('\n')
-        )
+          ].join('\n'),
+        ),
       );
     },
   });

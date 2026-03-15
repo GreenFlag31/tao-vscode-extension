@@ -6,7 +6,7 @@ export interface TsMapping {
 
 export interface TemplateError {
   templateExpression: string;
-  startPos: number | null;
-  endPos: number | null;
+  startPos: number;
+  endPos: number;
   message: string;
 }

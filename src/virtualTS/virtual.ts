@@ -1,13 +1,11 @@
-import * as vscode from 'vscode';
 import path from 'path';
 import { TemplateData } from '../lexer/interfaces.js';
-import { toImportPath } from './helpers.js';
+import { getWorkspaceFolder, toImportPath } from './helpers.js';
 import { VIRTUAL_FILE_NAME } from './checker.js';
 import { TsMapping } from './interfaces.js';
 
-const workspaceFolder = vscode.workspace.workspaceFolders?.[0].uri.fsPath ?? process.cwd();
 // Le chemin du fichier virtuel tel que vu par le LanguageService TypeScript
-const virtualFilePath = path.join(workspaceFolder, VIRTUAL_FILE_NAME);
+const virtualFilePath = path.join(getWorkspaceFolder(), VIRTUAL_FILE_NAME);
 
 function createHeader(interfacePath: string, interfaceName: string) {
   return `import type { ${interfaceName} } from '${interfacePath}';
@@ -57,7 +55,7 @@ function generateVirtualTs(
 ) {
   const relativeInterfacePath = toImportPath(virtualFilePath, interfacePath);
   let virtualTs = createHeader(relativeInterfacePath, interfaceName);
-  const mappings: TsMapping[] = [];
+  const virtualTsMappings: TsMapping[] = [];
 
   for (const expr of expressions) {
     for (const ident of extractIdentifiers(expr.value)) {
@@ -65,7 +63,7 @@ function generateVirtualTs(
       const tsStart = virtualTs.length + 'ctx.'.length;
       const tsEnd = tsStart + ident.length;
 
-      mappings.push({
+      virtualTsMappings.push({
         exprId: expr.id,
         tsStart,
         tsEnd,
@@ -77,7 +75,7 @@ function generateVirtualTs(
 
   virtualTs += createFooter();
 
-  return { virtualTs, mappings };
+  return { virtualTs, virtualTsMappings };
 }
 
 export { generateVirtualTs };

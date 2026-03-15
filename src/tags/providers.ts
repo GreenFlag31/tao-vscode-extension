@@ -7,6 +7,7 @@ import {
 } from '../utils.js';
 import { CompletionItemSnippetData } from '../interfaces.js';
 import { values } from '../config/init-config.js';
+import { log } from 'console';
 
 function getTagsProvider() {
   const tagsProvider = vscode.languages.registerCompletionItemProvider(
@@ -15,12 +16,22 @@ function getTagsProvider() {
       provideCompletionItems(document, position) {
         const text = getLineTextUntilPosition(document, position);
 
+        const alreadyInsideTag = new RegExp(
+          `${escapeRegExp(values.opening)}[^${escapeRegExp(values.closing)}]*$`,
+        );
+
+        if (alreadyInsideTag.test(text)) {
+          return undefined;
+        }
+
         const WHOLE_INCLUDE = /include\([^)]*\)?/dg;
         if (isCursorInsideCompletionItemGlobal(document, position, WHOLE_INCLUDE)) {
           return undefined;
         }
 
-        const match = text.match(/<%?$/); // changer ici !!
+        const openingRegex = new RegExp(`${escapeRegExp(values.opening)}?$`);
+
+        const match = text.match(openingRegex);
         const replaceRange = match
           ? new vscode.Range(position.translate(0, -match[0].length), position)
           : new vscode.Range(position, position);
@@ -68,7 +79,7 @@ function getTagsProvider() {
         return items;
       },
     },
-    ...values.opening.split('')
+    ...values.opening.split(''),
   );
 
   return tagsProvider;
@@ -108,7 +119,7 @@ function getIfWithTagsProvider() {
         return createCompletionItemSnippet(data);
       },
     },
-    'ifWithTags'
+    'ifWithTags',
   );
 
   return ifWithTagsProvider;
@@ -155,7 +166,7 @@ function getForWithTagsProvider() {
         return forCompletionItem;
       },
     },
-    'forWithTags'
+    'forWithTags',
   );
 
   return forWithTagsProvider;
@@ -206,7 +217,7 @@ function getForInWithTagsProvider() {
         return forInCompletionItem;
       },
     },
-    'forInWithTags'
+    'forInWithTags',
   );
 
   return forInWithTagsProvider;
@@ -246,7 +257,7 @@ function getForOfWithTagsProvider() {
         return createCompletionItemSnippet(data);
       },
     },
-    'forOfWithTags'
+    'forOfWithTags',
   );
 
   return forOfWithTagsProvider;
@@ -279,7 +290,7 @@ function getIncludeWithTagsProvider() {
         return createCompletionItemSnippet(data);
       },
     },
-    'includeWithTags'
+    'includeWithTags',
   );
 
   return forOfWithTagsProvider;
@@ -304,8 +315,8 @@ function getTagsHoverProvider() {
               '### TAO Evaluation Tag',
               '',
               `\`${values.opening} ... ${values.closing}\` — Runs inline **JavaScript code** inside the template.`,
-            ].join('\n')
-          )
+            ].join('\n'),
+          ),
         );
       }
 
@@ -313,7 +324,7 @@ function getTagsHoverProvider() {
       const openingInterpolateRegex = new RegExp(escapedOpeningInterpolation);
       const wordRangeInterpolate = document.getWordRangeAtPosition(
         position,
-        openingInterpolateRegex
+        openingInterpolateRegex,
       );
       if (wordRangeInterpolate) {
         return new vscode.Hover(
@@ -322,8 +333,8 @@ function getTagsHoverProvider() {
               '### TAO Interpolation Tag',
               '',
               `\`${values.openingWithInterpolate} ... ${values.closing}\` — Inserts **evaluated values** directly into the template output.`,
-            ].join('\n')
-          )
+            ].join('\n'),
+          ),
         );
       }
 
@@ -337,8 +348,8 @@ function getTagsHoverProvider() {
               '### TAO Interpolation Tag',
               '',
               `\`${values.openingWithRaw} ... ${values.closing}\` —  Inserts **raw HTML** directly into the template output.`,
-            ].join('\n')
-          )
+            ].join('\n'),
+          ),
         );
       }
 

@@ -5,14 +5,13 @@ import { getWorkspaceFolder } from './helpers.js';
 
 // Le fichier virtuel est placé à la racine du workspace utilisateur.
 // Résolu lazily à chaque typeCheck car workspaceFolders peut être undefined au chargement du module.
-export const VIRTUAL_FILE_NAME = '__tao_virtual__.ts';
+const VIRTUAL_FILE_NAME = '__tao_virtual__.ts';
+let version = 0;
+let currentSource = '';
 
 function getVirtualFileName(): string {
   return path.join(getWorkspaceFolder(), VIRTUAL_FILE_NAME);
 }
-
-let version = 0;
-let currentSource = '';
 
 const compilerOptions: ts.CompilerOptions = {
   strict: true,
@@ -51,6 +50,11 @@ const host: ts.LanguageServiceHost = {
 
 const languageService = ts.createLanguageService(host);
 
+function updateVirtualTs(source: string) {
+  currentSource = source;
+  version++;
+}
+
 function typeCheck(virtualTs: string) {
   currentSource = virtualTs;
   version++;
@@ -58,4 +62,4 @@ function typeCheck(virtualTs: string) {
   return languageService.getSemanticDiagnostics(getVirtualFileName());
 }
 
-export { typeCheck };
+export { typeCheck, updateVirtualTs, languageService, getVirtualFileName, VIRTUAL_FILE_NAME };

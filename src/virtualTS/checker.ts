@@ -1,11 +1,10 @@
 import ts from 'typescript';
-import * as vscode from 'vscode';
 import path from 'path';
 import { getWorkspaceFolder } from './helpers.js';
+import { VIRTUAL_FILE_NAME } from '../config/const.js';
 
 // Le fichier virtuel est placé à la racine du workspace utilisateur.
 // Résolu lazily à chaque typeCheck car workspaceFolders peut être undefined au chargement du module.
-const VIRTUAL_FILE_NAME = '__tao_virtual__.ts';
 let version = 0;
 let currentSource = '';
 
@@ -41,7 +40,7 @@ const host: ts.LanguageServiceHost = {
     return undefined;
   },
 
-  getCurrentDirectory: () => vscode.workspace.workspaceFolders?.[0].uri.fsPath ?? process.cwd(),
+  getCurrentDirectory: () => getWorkspaceFolder(),
   getDefaultLibFileName: (options) => ts.getDefaultLibFilePath(options),
   fileExists: ts.sys.fileExists,
   readFile: ts.sys.readFile,

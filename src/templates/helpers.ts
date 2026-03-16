@@ -5,9 +5,13 @@ import { values } from '../config/init-config.js';
 let completeTemplatesPath: string[] = [];
 
 function createTemplatesFilesWatcher() {
+  const folder = vscode.workspace.workspaceFolders?.[0];
+  if (!folder) return;
+
   const templatesFilesWatcher = vscode.workspace.createFileSystemWatcher(
-    `**/*.${values.extension}`,
+    new vscode.RelativePattern(folder, `**/${values.views}/**/*.${values.extension}`),
   );
+
   templatesFilesWatcher.onDidCreate(getTemplatesFiles);
   templatesFilesWatcher.onDidChange(getTemplatesFiles);
   templatesFilesWatcher.onDidDelete(getTemplatesFiles);

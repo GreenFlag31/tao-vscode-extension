@@ -1,5 +1,6 @@
 import { Options } from '../interfaces.js';
 
+const VIRTUAL_FILE_NAME = '__tao_virtual__.ts';
 const DEFAULT_EXTENSION = 'html';
 const DEFAULT_OPENING = '<%';
 const DEFAULT_CLOSING = '%>';
@@ -33,4 +34,5 @@ export {
   DEFAULT_OPTIONS,
   DEFAULT_RAW,
   DEFAULT_VIEWS,
+  VIRTUAL_FILE_NAME,
 };

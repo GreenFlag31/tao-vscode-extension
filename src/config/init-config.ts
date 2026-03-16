@@ -21,12 +21,17 @@ import {
   getIncludeWithTagsProvider,
   getTagsHoverProvider,
 } from '../tags/providers.js';
-import { getVariableHoverProvider } from '../user-data/providers.js';
+import { getTsCompletionProvider, getTsHoverProvider } from '../virtualTS/helpers.js';
 
 let values: InitValues;
 
 function createInitOptionsWatcher() {
-  const initOptionsWatcher = vscode.workspace.createFileSystemWatcher(`**/tao.config.mjs`);
+  const folder = vscode.workspace.workspaceFolders?.[0];
+  if (!folder) return;
+
+  const initOptionsWatcher = vscode.workspace.createFileSystemWatcher(
+    new vscode.RelativePattern(folder, `**/tao.config.mjs`),
+  );
 
   initOptionsWatcher.onDidCreate(() => getInitValues());
   initOptionsWatcher.onDidChange(() => getInitValues('update'));
@@ -148,21 +153,20 @@ function initProviders() {
 
   const forInWithTagsProvider = getForInWithTagsProvider();
 
-  // const injectedUserDataProvider = getInjectedUserDataProvider();
-
-  const variableHoverProvider = getVariableHoverProvider();
-
   const templatesNameProvider = getTemplatesNameProvider();
 
   const templateLinkProvider = getTemplateLinkProvider();
 
   const templateNamehoverProvider = getTemplateNameHoverProvider();
 
+  const tsHoverProvider = getTsHoverProvider();
+
+  const tsCompletionProvider = getTsCompletionProvider();
+
   return [
     tagsProvider,
     includeProvider,
     ifWithTagsProvider,
-    // injectedUserDataProvider,
     forWithTagsProvider,
     forInWithTagsProvider,
     forOfWithTagsProvider,
@@ -173,7 +177,8 @@ function initProviders() {
     includeWithTagsProvider,
     tagsHoverProvider,
     includeHoverProvider,
-    variableHoverProvider,
+    tsHoverProvider,
+    tsCompletionProvider,
   ];
 }
 

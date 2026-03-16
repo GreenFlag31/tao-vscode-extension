@@ -7,7 +7,6 @@ import {
 } from '../utils.js';
 import { CompletionItemSnippetData } from '../interfaces.js';
 import { values } from '../config/init-config.js';
-import { log } from 'console';
 
 function getTagsProvider() {
   const tagsProvider = vscode.languages.registerCompletionItemProvider(

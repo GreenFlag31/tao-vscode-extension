@@ -2,10 +2,13 @@
 
 A Visual Studio Code extension that adds **language support** for the [TAO template engine](https://github.com/GreenFlag31/node-tao). Node-tao is a Nodejs template engine that focuses on performance, security, and developer experience.
 
+This extension provides a typescript language service giving **validation, hovering information, autocompletion** inside the template.
+
 ![Presentation](https://raw.githubusercontent.com/GreenFlag31/tao-vscode-extension/main/assets/presentation.gif)
 
 ## ✨ Features
 
+- **Language Service** – Typescript validation, hovering information, autocompletion available inside a template.
 - **Tag completion** – Autocompletion for TAO template tags.
 - **Include support** – Suggestions and signature help for `include(...)`.
 - **Control structures** – Snippets and completions for `if`, `for`, `for-in`, and `for-of` with tags with syntax colors for html files.
@@ -32,25 +35,6 @@ const options = {
 export default options;
 ```
 
-## 🚀 Injected data in templates
-
-Injected data in a template file (variables and helpers) are available for autocompletion.
-
-```javascript
-const displayName = (firstname, lastname) => `${firstname} ${lastname}`;
-const result = tao.render(
-  'template2.html',
-  { firstname: 'John', lastname: 'Doe' },
-  { displayName }
-);
-```
-
-![Variable](https://raw.githubusercontent.com/GreenFlag31/tao-vscode-extension/main/assets/variable.png)
-
-The data will be available **after** a specific render take place, since it has to be first injected.
-
-_NB: Injected data is available only by setting Node-TAO in development mode._
-
 ## 🎨 Customize TAO tags colors
 
 If you wish to change the colors of the tags, provide the following configuration in the `settings.json` file in the settings of vscode.
@@ -69,10 +53,6 @@ If you wish to change the colors of the tags, provide the following configuratio
   ]
 }
 ```
-
-## 🛠️ Requirements
-
-Requires v0.0.3 of [node-tao](https://www.npmjs.com/package/node-tao) or higher.
 
 ## 🔧 Contributing
 

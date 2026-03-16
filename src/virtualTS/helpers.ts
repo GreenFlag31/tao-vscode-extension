@@ -10,17 +10,16 @@ import { typeCheck, updateVirtualTs, languageService, getVirtualFileName } from 
 import ts from 'typescript';
 import { TemplateError, TsMapping } from './interfaces.js';
 import { TemplateData } from '../lexer/interfaces.js';
+import fs from 'node:fs';
 
-const tsDiagnosticCollection = vscode.languages.createDiagnosticCollection(); // 'tao-typescript'
+const tsDiagnosticCollection = vscode.languages.createDiagnosticCollection();
 const documentState = new Map<
   string,
   { tokens: TemplateData[]; virtualTsMappings: TsMapping[]; virtualTs: string }
 >();
 const tsconfigPath = path.join(getWorkspaceFolder(), 'tsconfig.json');
-
-const project = new Project({
-  tsConfigFilePath: tsconfigPath || undefined,
-});
+const tsConfigFilePath = fs.existsSync(tsconfigPath) ? tsconfigPath : undefined;
+const project = new Project({ tsConfigFilePath });
 
 function getWorkspaceFolder() {
   const workspaceFolder = vscode.workspace.workspaceFolders?.[0].uri.fsPath ?? process.cwd();
@@ -39,8 +38,11 @@ async function handleTypescript(document: vscode.TextDocument | undefined) {
     return;
   }
 
+  const typescriptFiles = await getTypescriptFiles();
+
   const { interfaceName, absoluteInterfacePath } = await extractTemplateInterfacesFromRender(
     document.fileName,
+    typescriptFiles,
   );
 
   if (!absoluteInterfacePath) return;
@@ -90,9 +92,7 @@ async function handleTypescript(document: vscode.TextDocument | undefined) {
  * @param fileName - the template file name to match
  * @returns The absolute file path of the interface used in render<T> for the given template
  */
-async function extractTemplateInterfacesFromRender(fileName: string) {
-  const typescriptFiles = await getTypescriptFiles();
-
+async function extractTemplateInterfacesFromRender(fileName: string, typescriptFiles: string[]) {
   let interfaceName = '';
   let filePathOfInterfaceUsed = '';
 
@@ -153,7 +153,7 @@ function resolveInterface(filePath: string, interfaceName: string) {
         const dir = path.dirname(filePath);
         const resolvedBase = path.resolve(dir, modulePath);
 
-        if (resolvedBase) return resolvedBase;
+        return resolvedBase;
       }
     }
   }
@@ -315,8 +315,12 @@ function getTsCompletionProvider() {
         // Skip optional mode prefix char (= or ~) and leading whitespace
         let exprStart = tagStart + opening.length;
         const prefixChar = rawTemplate[exprStart];
-        if (prefixChar === values.interpolate || prefixChar === values.raw) exprStart++;
-        while (exprStart < cursorOffset && rawTemplate[exprStart] === ' ') exprStart++;
+        if (prefixChar === values.interpolate || prefixChar === values.raw) {
+          exprStart++;
+        }
+        while (exprStart < cursorOffset && rawTemplate[exprStart] === ' ') {
+          exprStart++;
+        }
 
         const typedText = rawTemplate.slice(exprStart, cursorOffset);
 

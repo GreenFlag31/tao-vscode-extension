@@ -56,11 +56,6 @@ function templateLexer(rawExpression: string, tags: Tags, parse: Parse) {
     let inBlockComment = false;
     let escaped = false;
 
-    // let singleQuoteStart: TemplateQuotePosition | null = null;
-    // let doubleQuoteStart: TemplateQuotePosition | null = null;
-    // let backtickStart: TemplateQuotePosition | null = null;
-    // let blockCommentStart: TemplateQuotePosition | null = null;
-
     while (cursor < rawExpression.length) {
       const char = rawExpression[cursor];
       const next = rawExpression[cursor + 1];
@@ -88,7 +83,6 @@ function templateLexer(rawExpression: string, tags: Tags, parse: Parse) {
       if (inBlockComment) {
         if (char === '*' && next === '/') {
           inBlockComment = false;
-          // blockCommentStart = null;
           cursor += 2;
           continue;
         }
@@ -105,7 +99,6 @@ function templateLexer(rawExpression: string, tags: Tags, parse: Parse) {
         }
         if (char === '/' && next === '*') {
           inBlockComment = true;
-          // blockCommentStart = { line };
           cursor += 2;
           continue;
         }
@@ -113,21 +106,18 @@ function templateLexer(rawExpression: string, tags: Tags, parse: Parse) {
 
       if (!inDouble && !inBacktick && char === "'") {
         inSingle = !inSingle;
-        // singleQuoteStart = inSingle ? { line } : null;
         cursor++;
         continue;
       }
 
       if (!inSingle && !inBacktick && char === '"') {
         inDouble = !inDouble;
-        // doubleQuoteStart = inDouble ? { line } : null;
         cursor++;
         continue;
       }
 
       if (!inSingle && !inDouble && char === '`') {
         inBacktick = !inBacktick;
-        // backtickStart = inBacktick ? { line } : null;
         cursor++;
         continue;
       }
@@ -146,34 +136,9 @@ function templateLexer(rawExpression: string, tags: Tags, parse: Parse) {
       cursor++;
     }
 
-    // if (inSingle) {
-    //   const error = 'Unclosed single quote';
-    //   log({ singleQuoteStart, blockLine, error });
-    // }
-
-    // if (inDouble) {
-    //   const error = 'Unclosed double quote';
-    //   log({ doubleQuoteStart, blockLine, error });
-    // }
-
-    // if (inBacktick) {
-    //   const error = 'Unclosed backtick';
-    //   log({ backtickStart, blockLine, error });
-    // }
-
-    // if (inBlockComment) {
-    //   const error = 'Unclosed block comment';
-    //   log({ blockCommentStart, blockLine, error });
-    // }
-
-    // if (cursor >= rawExpression.length) {
-    //   const error = `Unclosed template block ${closing}`;
-    //   log({ blockLine, error });
-    // }
-
     const content = rawExpression.slice(contentStart, cursor).trim();
     tokens.push({
-      id: tokens.length + 1,
+      id: tokens.length + 1, // 1-based index
       type: mode,
       value: content,
       line: blockLine,

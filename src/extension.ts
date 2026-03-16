@@ -1,12 +1,7 @@
 import * as vscode from 'vscode';
 import { createTemplatesFilesWatcher, getTemplatesFiles } from './templates/helpers.js';
 import { createInitOptionsWatcher, getInitValues, initProviders } from './config/init-config.js';
-import {
-  handleTypescript,
-  tsDiagnosticCollection,
-  getTsHoverProvider,
-  getTsCompletionProvider,
-} from './virtualTS/helpers.js';
+import { handleTypescript, tsDiagnosticCollection } from './virtualTS/helpers.js';
 
 // This method is called when your extension is activated
 async function activate(context: vscode.ExtensionContext) {
@@ -30,11 +25,7 @@ async function activate(context: vscode.ExtensionContext) {
     await handleTypescript(editor?.document);
   });
 
-  const tsHoverProvider = getTsHoverProvider();
-
-  const tsCompletionProvider = getTsCompletionProvider();
-
-  // when the user types in a template file, re-lex and update the virtual ts file after a short delay (debounce)
+  // usefull to get hover information, error diagnostics, etc. on the fly while editing a template file
   const onChangeListener = vscode.workspace.onDidChangeTextDocument((event) => {
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => handleTypescript(event.document), 1000);
@@ -42,13 +33,11 @@ async function activate(context: vscode.ExtensionContext) {
 
   context.subscriptions.push(
     ...providers,
-    initOptionsWatcher,
-    templatesFilesWatcher,
+    ...(initOptionsWatcher ? [initOptionsWatcher] : []),
+    ...(templatesFilesWatcher ? [templatesFilesWatcher] : []),
     onActiveEditorListener,
     onChangeListener,
     tsDiagnosticCollection,
-    tsHoverProvider,
-    tsCompletionProvider,
   );
 }
 

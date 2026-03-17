@@ -8,6 +8,14 @@ import { VIRTUAL_FILE_NAME } from '../config/const.js';
 let version = 0;
 let currentSource = '';
 
+// Buffer pour les fichiers TS ouverts non-sauvegardés
+const unsavedFiles = new Map<string, string>();
+
+function setUnsavedFile(filePath: string, content: string) {
+  unsavedFiles.set(path.normalize(filePath).toLowerCase(), content);
+  version++;
+}
+
 function getVirtualFileName(): string {
   return path.join(getWorkspaceFolder(), VIRTUAL_FILE_NAME);
 }
@@ -30,6 +38,12 @@ const host: ts.LanguageServiceHost = {
 
     if (normalizedName === normalizedVirtual) {
       return ts.ScriptSnapshot.fromString(currentSource);
+    }
+
+    // Priorité au buffer non-sauvegardé s'il existe
+    const unsaved = unsavedFiles.get(normalizedName);
+    if (unsaved !== undefined) {
+      return ts.ScriptSnapshot.fromString(unsaved);
     }
 
     const text = ts.sys.readFile(name);
@@ -61,4 +75,11 @@ function typeCheck(virtualTs: string) {
   return languageService.getSemanticDiagnostics(getVirtualFileName());
 }
 
-export { typeCheck, updateVirtualTs, languageService, getVirtualFileName, VIRTUAL_FILE_NAME };
+export {
+  typeCheck,
+  updateVirtualTs,
+  languageService,
+  getVirtualFileName,
+  VIRTUAL_FILE_NAME,
+  setUnsavedFile,
+};

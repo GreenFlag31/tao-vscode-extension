@@ -2,7 +2,7 @@
 
 ## TAO
 
-- Change the main into dist folder for publishing
+- Change the main into `dist` folder for publishing
 
 ## What's in the folder
 

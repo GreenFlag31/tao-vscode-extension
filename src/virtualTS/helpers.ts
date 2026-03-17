@@ -99,10 +99,13 @@ async function extractTemplateInterfacesFromRender(fileName: string, typescriptF
   for (const tsFilePath of typescriptFiles) {
     const renderCallRegex = /\.render\s*<\s*([A-Za-z0-9_]*)\s*>\(['"`]([^'"`]+)['"`]/g;
     const uri = vscode.Uri.file(tsFilePath);
-    const bytes = await vscode.workspace.fs.readFile(uri);
-    const content = new TextDecoder().decode(bytes);
-    let match: RegExpExecArray | null;
 
+    const openDoc = vscode.workspace.textDocuments.find((d) => d.uri.toString() === uri.toString());
+    const content = openDoc
+      ? openDoc.getText()
+      : new TextDecoder().decode(await vscode.workspace.fs.readFile(uri));
+
+    let match: RegExpExecArray | null;
     while ((match = renderCallRegex.exec(content)) !== null) {
       const [, interfaceDef, templateName] = match;
       const templateNameWithExtension = `${templateName}.${values.extension}`;
@@ -286,6 +289,36 @@ function tsKindToVsKind(kind: string): vscode.CompletionItemKind {
   }
 }
 
+/**
+ * Closes any unclosed (, [, { in `text` so the probe is valid TypeScript.
+ * e.g. "include('', { " → "include('', { })"
+ */
+function autoClose(text: string): string {
+  const closes: string[] = [];
+  const pairs: Record<string, string> = { '(': ')', '[': ']', '{': '}' };
+  let inString: string | null = null;
+
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (inString) {
+      if (ch === '\\') {
+        i++;
+        continue;
+      }
+      if (ch === inString) inString = null;
+      continue;
+    }
+    if (ch === '"' || ch === "'" || ch === '`') {
+      inString = ch;
+      continue;
+    }
+    if (ch in pairs) closes.push(pairs[ch]);
+    else if (ch === ')' || ch === ']' || ch === '}') closes.pop();
+  }
+
+  return text + closes.reverse().join('');
+}
+
 function getTsCompletionProvider() {
   return vscode.languages.registerCompletionItemProvider(
     { language: values.extension, scheme: 'file' },
@@ -324,11 +357,16 @@ function getTsCompletionProvider() {
 
         const typedText = rawTemplate.slice(exprStart, cursorOffset);
 
-        // Build a probe virtual TS: append ctx.TYPED_TEXT before the closing brace
         const { virtualTs } = state;
-        const closingBrace = virtualTs.lastIndexOf('}');
-        const probe = `${virtualTs.slice(0, closingBrace)}ctx.${typedText}\n}`;
-        const queryPos = closingBrace + `ctx.${typedText}`.length;
+        const insertPos = virtualTs.lastIndexOf('}');
+
+        // include(...) is an engine global — must not be prefixed with ctx.
+        // Close any unclosed brackets so TypeScript can infer argument types.
+        const isInclude = /^include\s*\(/.test(typedText.trimStart());
+        const closedText = isInclude ? autoClose(typedText) : typedText;
+        const prefix = isInclude ? '' : 'ctx.';
+        const probe = `${virtualTs.slice(0, insertPos)}${prefix}${closedText}\n}`;
+        const queryPos = insertPos + prefix.length + typedText.length;
 
         updateVirtualTs(probe);
         const completions = languageService.getCompletionsAtPosition(
@@ -347,7 +385,9 @@ function getTsCompletionProvider() {
         });
       },
     },
-    '.', // also trigger on dot for property chains
+    '.', // property chains
+    '{', // object literal arguments
+    ',', // next argument
   );
 }
 

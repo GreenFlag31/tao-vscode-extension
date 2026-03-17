@@ -10,38 +10,57 @@ const virtualFilePath = path.join(getWorkspaceFolder(), VIRTUAL_FILE_NAME);
 function createHeader(interfacePath: string, interfaceName: string) {
   return `import type { ${interfaceName} } from '${interfacePath}';
 
-function __tao_render(ctx: ${interfaceName}) {
+type __TaoData = { [K in keyof ${interfaceName} as ${interfaceName}[K] extends ((...args: any[]) => any) ? never : K]?: ${interfaceName}[K] };
+type __TaoHelpers = { [K in keyof ${interfaceName} as ${interfaceName}[K] extends ((...args: any[]) => any) ? K : never]?: ${interfaceName}[K] };
+
+declare function include(template: string, data?: __TaoData, helper?: __TaoHelpers): string;
+
+((ctx: ${interfaceName}) => {
 `;
 }
 
 function createFooter(): string {
-  return '}';
+  return '})(null!);\n';
 }
 
 /**
  * Extracts ctx property accesses from a template expression value.
  *
- * - Simple identifier or property chain: `name` → ['name'], `user.name` → ['user.name']
- * - Template literal: `\`hi ${name}\`` → ['name']
- * - Falls back to empty array for unrecognised expressions.
+ * - Template literals : recurse into ${...} interpolations
+ * - Pure literals (string, number, boolean, null, undefined) : ignored
+ * - Everything else starting with an identifier or unary operator :
+ *   returned as-is so TypeScript validates `ctx.${expr}` naturally
  */
-function extractIdentifiers(value: string) {
+function extractIdentifiers(value: string): string[] {
   const trimmed = value.trim();
+  if (!trimmed) return [];
 
-  // Simple identifier or property chain (e.g. "name", "user.name")
-  if (/^[A-Za-z_$][\w$.]*$/.test(trimmed)) {
-    return [trimmed];
+  // Template literal — recurse into ${...} interpolations
+  if (trimmed.startsWith('`')) {
+    const results: string[] = [];
+    const re = /\$\{([^}]+)\}/g;
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(trimmed)) !== null) results.push(...extractIdentifiers(m[1]));
+    return results;
   }
 
-  // Extract ${...} contents from template literals
-  const results: string[] = [];
-  const templateVarRegex = /\$\{([^}]+)\}/g;
-  let m: RegExpExecArray | null;
-  while ((m = templateVarRegex.exec(trimmed)) !== null) {
-    results.push(...extractIdentifiers(m[1]));
+  // Pure literals — no ctx reference
+  if (
+    /^(['"])[\s\S]*\1$/.test(trimmed) ||
+    /^\d/.test(trimmed) ||
+    trimmed === 'true' ||
+    trimmed === 'false' ||
+    trimmed === 'null' ||
+    trimmed === 'undefined'
+  ) {
+    return [];
   }
 
-  return results;
+  // Any expression starting with an identifier or unary operator:
+  // returned as-is, TypeScript will validate ctx.${expr} and report errors
+  if (/^[A-Za-z_$!~]/.test(trimmed)) return [trimmed];
+
+  return [];
 }
 
 /**
@@ -59,8 +78,10 @@ function generateVirtualTs(
 
   for (const expr of expressions) {
     for (const ident of extractIdentifiers(expr.value)) {
-      const line = `ctx.${ident};\n`;
-      const tsStart = virtualTs.length + 'ctx.'.length;
+      // include(...) is a template engine global — not a ctx property
+      const isEngineGlobal = /^include\s*\(/.test(ident);
+      const line = isEngineGlobal ? `${ident};\n` : `ctx.${ident};\n`;
+      const tsStart = virtualTs.length + (isEngineGlobal ? 0 : 'ctx.'.length);
       const tsEnd = tsStart + ident.length;
 
       virtualTsMappings.push({

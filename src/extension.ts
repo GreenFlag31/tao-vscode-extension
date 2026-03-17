@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { createTemplatesFilesWatcher, getTemplatesFiles } from './templates/helpers.js';
 import { createInitOptionsWatcher, getInitValues, initProviders } from './config/init-config.js';
 import { handleTypescript, tsDiagnosticCollection } from './virtualTS/helpers.js';
+import { languageService, setUnsavedFile } from './virtualTS/checker.js';
 
 // This method is called when your extension is activated
 async function activate(context: vscode.ExtensionContext) {
@@ -28,7 +29,19 @@ async function activate(context: vscode.ExtensionContext) {
   // usefull to get hover information, error diagnostics, etc. on the fly while editing a template file
   const onChangeListener = vscode.workspace.onDidChangeTextDocument((event) => {
     clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(() => handleTypescript(event.document), 1000);
+
+    if (event.document.languageId === 'typescript') {
+      // Mettre à jour le buffer non-sauvegardé dans le LanguageService
+      setUnsavedFile(event.document.fileName, event.document.getText());
+      // Re-valider tous les templates ouverts qui pourraient dépendre de ce fichier TS
+      debounceTimer = setTimeout(async () => {
+        for (const doc of vscode.workspace.textDocuments) {
+          await handleTypescript(doc);
+        }
+      }, 300);
+    } else {
+      debounceTimer = setTimeout(() => handleTypescript(event.document), 300);
+    }
   });
 
   context.subscriptions.push(
@@ -38,6 +51,7 @@ async function activate(context: vscode.ExtensionContext) {
     onActiveEditorListener,
     onChangeListener,
     tsDiagnosticCollection,
+    languageService,
   );
 }
 

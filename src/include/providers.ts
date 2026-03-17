@@ -34,7 +34,7 @@ function getIncludeProvider() {
         return include;
       },
     },
-    'i',
+    // 'i',
   );
 
   return includeProvider;
@@ -129,4 +129,4 @@ function getIncludeHoverProvider() {
   return hoverProvider;
 }
 
-export { getIncludeProvider, getIncludeSignatureProvider, getIncludeHoverProvider };
+export { getIncludeSignatureProvider, getIncludeHoverProvider, getIncludeProvider };

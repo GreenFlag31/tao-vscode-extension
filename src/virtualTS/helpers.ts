@@ -1,4 +1,3 @@
-import { log } from 'console';
 import * as vscode from 'vscode';
 import { Project } from 'ts-morph';
 import path from 'path';
@@ -47,8 +46,7 @@ async function handleTypescript(document: vscode.TextDocument | undefined) {
 
   if (!absoluteInterfacePath) return;
 
-  // logger(
-  //   'warn',
+  // log(
   //   `Processing template ${document.fileName} with interface ${interfaceName} from ${absoluteInterfacePath}`,
   // );
 
@@ -59,7 +57,7 @@ async function handleTypescript(document: vscode.TextDocument | undefined) {
     absoluteInterfacePath,
     interfaceName,
   );
-  // logger('warn', `Generated Virtual TS: ${virtualTs}\n`);
+  // log(`Generated Virtual TS: ${virtualTs}\n`);
 
   const diagnostics = typeCheck(virtualTs);
 
@@ -95,6 +93,7 @@ async function handleTypescript(document: vscode.TextDocument | undefined) {
 async function extractTemplateInterfacesFromRender(fileName: string, typescriptFiles: string[]) {
   let interfaceName = '';
   let filePathOfInterfaceUsed = '';
+  let fileContent = '';
 
   for (const tsFilePath of typescriptFiles) {
     const renderCallRegex = /\.render\s*<\s*([A-Za-z0-9_]*)\s*>\(['"`]([^'"`]+)['"`]/g;
@@ -113,28 +112,51 @@ async function extractTemplateInterfacesFromRender(fileName: string, typescriptF
       if (fileName.endsWith(templateNameWithExtension)) {
         interfaceName = interfaceDef;
         filePathOfInterfaceUsed = tsFilePath;
+        fileContent = content;
         break;
       }
     }
   }
 
   if (!interfaceName) {
-    log(`No interface found in render calls for template ${fileName}`);
+    // log(`No interface found in render calls for template ${fileName}`);
     return { interfaceName: null, absoluteInterfacePath: null };
   }
 
   // logger('warn', `Interface ${interfaceName} found for template ${fileName}`);
 
-  const absoluteInterfacePath = resolveInterface(filePathOfInterfaceUsed, interfaceName);
+  const absoluteInterfacePath = resolveInterface(
+    filePathOfInterfaceUsed,
+    fileContent,
+    interfaceName,
+  );
 
   return { interfaceName, absoluteInterfacePath };
+}
+
+function resolveInterface(filePath: string, content: string, interfaceName: string) {
+  // 1. Defined locally?
+  if (new RegExp(`(?:interface|type)\\s+${interfaceName}\\b`).test(content)) {
+    return filePath;
+  }
+
+  // 2. Imported from somewhere?
+  const importRegex = new RegExp(`import[^;]*\\b${interfaceName}\\b[^;]*from\\s*['"]([^'"]+)['"]`);
+  const match = importRegex.exec(content);
+  if (match) {
+    const modulePath = match[1];
+    const dir = path.dirname(filePath);
+    return path.resolve(dir, modulePath).replace(/\.js$/, '.ts');
+  }
+
+  return null;
 }
 
 /**
  * Resolves the absolute file path where the given interface is defined
  * Returns the absolute fsPath of the file containing the interface definition
  */
-function resolveInterface(filePath: string, interfaceName: string) {
+function resolveInterface4(filePath: string, interfaceName: string) {
   let sourceFile = project.getSourceFile(filePath);
 
   if (!sourceFile) {
@@ -154,7 +176,8 @@ function resolveInterface(filePath: string, interfaceName: string) {
       if (spec.getName() === interfaceName) {
         const modulePath = imp.getModuleSpecifierValue();
         const dir = path.dirname(filePath);
-        const resolvedBase = path.resolve(dir, modulePath);
+        // In TypeScript ESM, imports use `.js` but the actual source file is `.ts`
+        const resolvedBase = path.resolve(dir, modulePath).replace(/\.js$/, '.ts');
 
         return resolvedBase;
       }
@@ -170,10 +193,10 @@ function resolveInterface(filePath: string, interfaceName: string) {
  */
 function toImportPath(virtualTsFilePath: string, interfaceAbsPath: string): string {
   const virtualDir = path.dirname(virtualTsFilePath);
-  // Remove .ts / .d.ts extension — TypeScript imports never include it
-  const withoutExt = interfaceAbsPath.replace(/\.d\.ts$|\.ts$/, '');
+  // Replace .ts / .d.ts with .js — the Language Service uses NodeNext
+  const withJsExt = interfaceAbsPath.replace(/\.d\.ts$|\.ts$/, '.js');
 
-  let relativePath = path.relative(virtualDir, withoutExt);
+  let relativePath = path.relative(virtualDir, withJsExt);
   let relativePathNormalized = normalizeWindowsPath(relativePath);
 
   // Ensure the path starts with ./ or ../
@@ -202,9 +225,6 @@ function mapDiagnosticsToTemplate(
     if (!mapping) continue;
 
     const expr = expressions.find((expression) => expression.id === mapping.exprId)!;
-
-    // log(diagnostic);
-    // console.log(mapping);
 
     const { valueStart, valueEnd } = correctStartingOrEndingPositions(rawTemplate, expr);
 
@@ -355,15 +375,15 @@ function getTsCompletionProvider() {
           exprStart++;
         }
 
-        const typedText = rawTemplate.slice(exprStart, cursorOffset);
-
         const { virtualTs } = state;
         const insertPos = virtualTs.lastIndexOf('}');
 
         // include(...) is an engine global — must not be prefixed with ctx.
         // Close any unclosed brackets so TypeScript can infer argument types.
+        const typedText = rawTemplate.slice(exprStart, cursorOffset);
         const isInclude = /^include\s*\(/.test(typedText.trimStart());
         const closedText = isInclude ? autoClose(typedText) : typedText;
+
         const prefix = isInclude ? '' : 'ctx.';
         const probe = `${virtualTs.slice(0, insertPos)}${prefix}${closedText}\n}`;
         const queryPos = insertPos + prefix.length + typedText.length;

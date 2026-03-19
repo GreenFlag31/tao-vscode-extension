@@ -7,6 +7,9 @@ import { TsMapping } from './interfaces.js';
 // Le chemin du fichier virtuel tel que vu par le LanguageService TypeScript
 const virtualFilePath = path.join(getWorkspaceFolder(), VIRTUAL_FILE_NAME);
 
+/**
+ * IIEF function to be invisible to typescript, otherwise it is included in the functions propositions
+ */
 function createHeader(interfacePath: string, interfaceName: string) {
   return `import type { ${interfaceName} } from '${interfacePath}';
 
@@ -63,10 +66,6 @@ function extractIdentifiers(value: string): string[] {
   return [];
 }
 
-/**
- * @param expressions Les expressions extraites du template
- * Le diagnostic de TypeScript sera lié au mappings qui contient l'id de l'expression
- */
 function generateVirtualTs(
   expressions: TemplateData[],
   interfacePath: string,

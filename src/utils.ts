@@ -71,22 +71,6 @@ function escapeRegExp(string: string) {
   return string.replace(/[.*+\-?^${}()|[\]\\]/g, '\\$&');
 }
 
-function logger(level: 'info' | 'warn' | 'error' | 'debug', message: string) {
-  if (!message) return;
-
-  const color = {
-    debug: '\x1b[90m',
-    info: '\x1b[36m',
-    warn: '\x1b[33m',
-    error: '\x1b[31m',
-  }[level];
-
-  const reset = '\x1b[0m';
-  const time = new Date().toISOString();
-
-  console.log(`${color}[${time}] [${level.toUpperCase()}]${reset}`, message);
-}
-
 export {
   getLineTextUntilPosition,
   getFileName,
@@ -94,5 +78,4 @@ export {
   createCompletionItemSnippet,
   escapeRegExp,
   isCursorInsideCompletionItemGlobal,
-  logger,
 };

@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-import { Project } from 'ts-morph';
 import path from 'path';
 import { values } from '../config/init-config.js';
 import { normalizeWindowsPath } from '../utils.js';
@@ -9,16 +8,12 @@ import { typeCheck, updateVirtualTs, languageService, getVirtualFileName } from 
 import ts from 'typescript';
 import { TemplateError, TsMapping } from './interfaces.js';
 import { TemplateData } from '../lexer/interfaces.js';
-import fs from 'node:fs';
 
 const tsDiagnosticCollection = vscode.languages.createDiagnosticCollection();
 const documentState = new Map<
   string,
   { tokens: TemplateData[]; virtualTsMappings: TsMapping[]; virtualTs: string }
 >();
-const tsconfigPath = path.join(getWorkspaceFolder(), 'tsconfig.json');
-const tsConfigFilePath = fs.existsSync(tsconfigPath) ? tsconfigPath : undefined;
-const project = new Project({ tsConfigFilePath });
 
 function getWorkspaceFolder() {
   const workspaceFolder = vscode.workspace.workspaceFolders?.[0].uri.fsPath ?? process.cwd();
@@ -123,7 +118,7 @@ async function extractTemplateInterfacesFromRender(fileName: string, typescriptF
     return { interfaceName: null, absoluteInterfacePath: null };
   }
 
-  // logger('warn', `Interface ${interfaceName} found for template ${fileName}`);
+  // log(`Interface ${interfaceName} found for template ${fileName}`);
 
   const absoluteInterfacePath = resolveInterface(
     filePathOfInterfaceUsed,
@@ -147,41 +142,6 @@ function resolveInterface(filePath: string, content: string, interfaceName: stri
     const modulePath = match[1];
     const dir = path.dirname(filePath);
     return path.resolve(dir, modulePath).replace(/\.js$/, '.ts');
-  }
-
-  return null;
-}
-
-/**
- * Resolves the absolute file path where the given interface is defined
- * Returns the absolute fsPath of the file containing the interface definition
- */
-function resolveInterface4(filePath: string, interfaceName: string) {
-  let sourceFile = project.getSourceFile(filePath);
-
-  if (!sourceFile) {
-    sourceFile = project.addSourceFileAtPathIfExists(filePath);
-  }
-
-  if (!sourceFile) return null;
-
-  const localInterface = sourceFile.getInterface(interfaceName);
-
-  if (localInterface) return filePath;
-
-  for (const imp of sourceFile.getImportDeclarations()) {
-    const namedImports = imp.getNamedImports();
-
-    for (const spec of namedImports) {
-      if (spec.getName() === interfaceName) {
-        const modulePath = imp.getModuleSpecifierValue();
-        const dir = path.dirname(filePath);
-        // In TypeScript ESM, imports use `.js` but the actual source file is `.ts`
-        const resolvedBase = path.resolve(dir, modulePath).replace(/\.js$/, '.ts');
-
-        return resolvedBase;
-      }
-    }
   }
 
   return null;

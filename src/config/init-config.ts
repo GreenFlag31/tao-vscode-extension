@@ -129,6 +129,7 @@ async function getInitValues(typeUpdate: 'none' | 'update' = 'none') {
     exec,
     interpolate,
     raw,
+    format: options.format ?? true,
   };
 }
 

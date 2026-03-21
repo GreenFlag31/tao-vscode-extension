@@ -30,10 +30,13 @@ const options = {
   parse: { exec: '', interpolate: '=', raw: '~' }, // parse configuration
   tags: { opening: '<%', closing: '%>' }, // tags configuration
   views: 'src', // folder where template files are stored
+  format: true, // enable the built-in TAO template formatter
 };
 
 export default options;
 ```
+
+> **`format`** (default: `true`) — When `true`, the extension formats your templates on save and on "Format Document" (Shift+Alt+F). Set to `false` to disable the TAO formatter entirely, for example if you prefer to handle formatting yourself.
 
 ## 🎨 Customize TAO tags colors
 

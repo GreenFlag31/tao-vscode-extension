@@ -3,6 +3,7 @@ import { createTemplatesFilesWatcher, getTemplatesFiles } from './templates/help
 import { createInitOptionsWatcher, getInitValues, initProviders } from './config/init-config.js';
 import { handleTypescript, tsDiagnosticCollection } from './virtualTS/helpers.js';
 import { languageService, setUnsavedFile } from './virtualTS/checker.js';
+import { createFormattingProvider } from './formatter/provider.js';
 
 // This method is called when your extension is activated
 async function activate(context: vscode.ExtensionContext) {
@@ -15,6 +16,7 @@ async function activate(context: vscode.ExtensionContext) {
   const templatesFilesWatcher = createTemplatesFilesWatcher();
 
   const providers = initProviders();
+  const formattingProvider = createFormattingProvider();
 
   // Lex all visible template files at startup
   for (const document of vscode.workspace.textDocuments) {
@@ -46,6 +48,7 @@ async function activate(context: vscode.ExtensionContext) {
 
   context.subscriptions.push(
     ...providers,
+    ...formattingProvider,
     ...(initOptionsWatcher ? [initOptionsWatcher] : []),
     ...(templatesFilesWatcher ? [templatesFilesWatcher] : []),
     onActiveEditorListener,

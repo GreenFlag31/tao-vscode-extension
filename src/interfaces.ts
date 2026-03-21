@@ -18,6 +18,12 @@ export interface Options {
    * @default "html"
    */
   extension: string;
+  /**
+   * Enable the built-in TAO template formatter.
+   * Set to false to disable format-on-save and Format Document for TAO templates.
+   * @default true
+   */
+  format?: boolean;
 }
 
 export interface Tags {
@@ -72,6 +78,7 @@ export interface InitValues {
   exec: string;
   interpolate: string;
   raw: string;
+  format: boolean;
   openingAndClosingEvaluation: string;
   openingAndClosingInterpolation: string;
   openingAndClosingRaw: string;

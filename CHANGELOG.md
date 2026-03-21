@@ -11,3 +11,7 @@
 ## [0.0.3] - 2025-09-23
 
 - Syntax color improvements, hover DX template help, template inclusion file correction.
+
+## [1.0.0] - 2025-09-23
+
+- Adding typescript language service, autocompletion, and basic formatting.

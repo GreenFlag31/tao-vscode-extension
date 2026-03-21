@@ -66,6 +66,34 @@ function extractIdentifiers(value: string): string[] {
   return [];
 }
 
+/**
+ * Scans all execute tokens and returns a set of locally-declared variable names.
+ * Covered patterns:
+ *   for (const x of ...)        → x
+ *   for (const x in ...)        → x
+ *   for (let i = 0; ...)        → i
+ *   const/let/var x = ...       → x
+ */
+function collectLocalVars(expressions: TemplateData[]): Set<string> {
+  const locals = new Set<string>();
+  const ident = '[A-Za-z_$][A-Za-z0-9_$]*';
+  const patterns = [
+    new RegExp(`(?:const|let|var)\\s+(${ident})\\s+(?:of|in)\\s`), // for...of / for...in
+    new RegExp(`(?:const|let|var)\\s+(${ident})\\s*=`), // const/let/var x =
+    new RegExp(`for\\s*\\(\\s*(?:let|var)\\s+(${ident})\\s*=`), // for (let i = 0; …)
+  ];
+
+  for (const expr of expressions) {
+    if (expr.type !== 'execute') continue;
+    for (const re of patterns) {
+      const m = re.exec(expr.value);
+      if (m) locals.add(m[1]);
+    }
+  }
+
+  return locals;
+}
+
 function generateVirtualTs(
   expressions: TemplateData[],
   interfacePath: string,
@@ -75,12 +103,26 @@ function generateVirtualTs(
   let virtualTs = createHeader(relativeInterfacePath, interfaceName);
   const virtualTsMappings: TsMapping[] = [];
 
+  const localVars = collectLocalVars(expressions);
+
+  // Declare local variables so TypeScript knows they exist (type any — they
+  // come from JS control structures in execute tags, not from the interface).
+  for (const varName of localVars) {
+    virtualTs += `let ${varName}: any;\n`;
+  }
+
   for (const expr of expressions) {
+    // Execute tags contain JS statements (for, if, const, …) that cannot be
+    // meaningfully validated as ctx property accesses. Skip them entirely.
+    if (expr.type === 'execute') continue;
+
     for (const ident of extractIdentifiers(expr.value)) {
       // include(...) is a template engine global — not a ctx property
       const isEngineGlobal = /^include\s*\(/.test(ident);
-      const line = isEngineGlobal ? `${ident};\n` : `ctx.${ident};\n`;
-      const tsStart = virtualTs.length + (isEngineGlobal ? 0 : 'ctx.'.length);
+      // Variables declared in execute tags (for, const, …) are local — not ctx properties
+      const isLocal = localVars.has(ident.split(/[.\[( ]/)[0]);
+      const line = isEngineGlobal || isLocal ? `${ident};\n` : `ctx.${ident};\n`;
+      const tsStart = virtualTs.length + (isEngineGlobal || isLocal ? 0 : 'ctx.'.length);
       const tsEnd = tsStart + ident.length;
 
       virtualTsMappings.push({

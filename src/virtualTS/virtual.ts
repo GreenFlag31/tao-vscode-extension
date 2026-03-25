@@ -8,15 +8,12 @@ import { TsMapping } from './interfaces.js';
 const virtualFilePath = path.join(getWorkspaceFolder(), VIRTUAL_FILE_NAME);
 
 /**
- * IIEF function to be invisible to typescript, otherwise it is included in the functions propositions
+ * IIFE function to be invisible to typescript, otherwise it is included in the functions propositions
  */
 function createHeader(interfacePath: string, interfaceName: string) {
   return `import type { ${interfaceName} } from '${interfacePath}';
 
-type __TaoData = { [K in keyof ${interfaceName} as ${interfaceName}[K] extends ((...args: any[]) => any) ? never : K]?: ${interfaceName}[K] };
-type __TaoHelpers = { [K in keyof ${interfaceName} as ${interfaceName}[K] extends ((...args: any[]) => any) ? K : never]?: ${interfaceName}[K] };
-
-declare function include(template: string, data?: __TaoData, helper?: __TaoHelpers): string;
+declare function include(templatePath: string, dataOrHelpers?: Partial<${interfaceName}> & Record<string, unknown>): string;
 
 ((ctx: ${interfaceName}) => {
 `;
@@ -27,7 +24,7 @@ function createFooter(): string {
 }
 
 /**
- * Extracts ctx property accesses from a template expression value.
+ * Extracts ctx property accesses from a template interpolate/raw expression value.
  *
  * - Template literals : recurse into ${...} interpolations
  * - Pure literals (string, number, boolean, null, undefined) : ignored
@@ -66,32 +63,253 @@ function extractIdentifiers(value: string): string[] {
   return [];
 }
 
-/**
- * Scans all execute tokens and returns a set of locally-declared variable names.
- * Covered patterns:
- *   for (const x of ...)        → x
- *   for (const x in ...)        → x
- *   for (let i = 0; ...)        → i
- *   const/let/var x = ...       → x
- */
-function collectLocalVars(expressions: TemplateData[]): Set<string> {
-  const locals = new Set<string>();
-  const ident = '[A-Za-z_$][A-Za-z0-9_$]*';
-  const patterns = [
-    new RegExp(`(?:const|let|var)\\s+(${ident})\\s+(?:of|in)\\s`), // for...of / for...in
-    new RegExp(`(?:const|let|var)\\s+(${ident})\\s*=`), // const/let/var x =
-    new RegExp(`for\\s*\\(\\s*(?:let|var)\\s+(${ident})\\s*=`), // for (let i = 0; …)
-  ];
+// ─── Execute tag transformation ───────────────────────────────────────────────
 
-  for (const expr of expressions) {
-    if (expr.type !== 'execute') continue;
-    for (const re of patterns) {
-      const m = re.exec(expr.value);
-      if (m) locals.add(m[1]);
+const JS_KEYWORDS = new Set([
+  'if',
+  'else',
+  'for',
+  'while',
+  'do',
+  'switch',
+  'case',
+  'break',
+  'continue',
+  'return',
+  'const',
+  'let',
+  'var',
+  'function',
+  'class',
+  'new',
+  'delete',
+  'typeof',
+  'instanceof',
+  'in',
+  'of',
+  'null',
+  'undefined',
+  'true',
+  'false',
+  'void',
+  'this',
+  'super',
+  'import',
+  'export',
+  'default',
+  'try',
+  'catch',
+  'finally',
+  'throw',
+  'async',
+  'await',
+  'yield',
+  'from',
+  'as',
+  'static',
+  'get',
+  'set',
+]);
+
+const JS_GLOBALS = new Set([
+  'Math',
+  'JSON',
+  'Date',
+  'Array',
+  'Object',
+  'String',
+  'Number',
+  'Boolean',
+  'RegExp',
+  'Error',
+  'Promise',
+  'Map',
+  'Set',
+  'Symbol',
+  'BigInt',
+  'Infinity',
+  'NaN',
+  'console',
+  'parseInt',
+  'parseFloat',
+  'isNaN',
+  'isFinite',
+  'encodeURIComponent',
+  'decodeURIComponent',
+  'encodeURI',
+  'decodeURI',
+  'include',
+]);
+
+const DECL_KEYWORDS = new Set(['const', 'let', 'var']);
+
+/**
+ * Rewrites free identifiers in `expr` to `ctx.ident`, skipping:
+ *  - JS keywords and built-in globals
+ *  - locally declared variables (knownLocals + variables declared earlier in expr)
+ *  - property accesses (identifiers directly preceded by '.')
+ *  - content inside string literals (single, double, backtick with ${…} recursion)
+ *
+ * Also detects declaration positions (after const/let/var) and returns those
+ * variable names as `newLocals` so the caller can register them.
+ */
+function prefixFreeIdentifiers(
+  expr: string,
+  knownLocals: Set<string>,
+): { result: string; newLocals: string[] } {
+  const newLocals: string[] = [];
+  let result = '';
+  let i = 0;
+  const len = expr.length;
+  let prevKeyword = ''; // last keyword token seen (kept across whitespace)
+
+  while (i < len) {
+    const ch = expr[i];
+
+    // Whitespace — preserve prevKeyword so "const   x" works
+    if (ch === ' ' || ch === '\t' || ch === '\n' || ch === '\r') {
+      result += ch;
+      i++;
+      continue;
     }
+
+    // Single or double quoted string — copy verbatim
+    if (ch === '"' || ch === "'") {
+      prevKeyword = '';
+      const close = ch;
+      result += ch;
+      i++;
+      while (i < len) {
+        const c = expr[i];
+        result += c;
+        if (c === '\\') {
+          i++;
+          if (i < len) {
+            result += expr[i];
+            i++;
+          }
+          continue;
+        }
+        if (c === close) {
+          i++;
+          break;
+        }
+        i++;
+      }
+      continue;
+    }
+
+    // Template literal — copy verbatim, recurse into ${…}
+    if (ch === '`') {
+      prevKeyword = '';
+      result += ch;
+      i++;
+      while (i < len) {
+        const c = expr[i];
+        if (c === '\\') {
+          result += c;
+          i++;
+          if (i < len) {
+            result += expr[i];
+            i++;
+          }
+          continue;
+        }
+        if (c === '`') {
+          result += c;
+          i++;
+          break;
+        }
+        if (c === '$' && expr[i + 1] === '{') {
+          result += '${';
+          i += 2;
+          let depth = 1;
+          let inner = '';
+          while (i < len && depth > 0) {
+            const ic = expr[i];
+            if (ic === '{') depth++;
+            else if (ic === '}') {
+              depth--;
+              if (depth === 0) break;
+            }
+            inner += ic;
+            i++;
+          }
+          const sub = prefixFreeIdentifiers(inner, new Set([...knownLocals, ...newLocals]));
+          result += sub.result;
+          newLocals.push(...sub.newLocals);
+          if (i < len) {
+            result += '}';
+            i++;
+          }
+          continue;
+        }
+        result += c;
+        i++;
+      }
+      continue;
+    }
+
+    // Identifier
+    if (/[A-Za-z_$]/.test(ch)) {
+      let j = i;
+      while (j < len && /[A-Za-z0-9_$]/.test(expr[j])) j++;
+      const ident = expr.slice(i, j);
+      i = j;
+
+      const isDeclPosition = DECL_KEYWORDS.has(prevKeyword);
+      prevKeyword = JS_KEYWORDS.has(ident) ? ident : '';
+
+      if (isDeclPosition) {
+        // This identifier is being declared — register as local, no ctx. prefix
+        newLocals.push(ident);
+        result += ident;
+      } else {
+        // Property access: find last non-whitespace char in result so far
+        let lastNonWs = '';
+        for (let k = result.length - 1; k >= 0; k--) {
+          if (result[k] !== ' ' && result[k] !== '\t' && result[k] !== '\n') {
+            lastNonWs = result[k];
+            break;
+          }
+        }
+        const allLocals = new Set([...knownLocals, ...newLocals]);
+        if (
+          lastNonWs !== '.' &&
+          !JS_KEYWORDS.has(ident) &&
+          !JS_GLOBALS.has(ident) &&
+          !allLocals.has(ident)
+        ) {
+          result += `ctx.${ident}`;
+        } else {
+          result += ident;
+        }
+      }
+      continue;
+    }
+
+    // Any other character — reset prevKeyword
+    prevKeyword = '';
+    result += ch;
+    i++;
   }
 
-  return locals;
+  return { result, newLocals };
+}
+
+/**
+ * Transforms a single execute-tag content into a valid TypeScript statement
+ * by delegating entirely to prefixFreeIdentifiers.
+ * Returns the transformed line and any new local variable names it introduces.
+ */
+function transformExecute(
+  content: string,
+  knownLocals: Set<string>,
+): { line: string; newLocals: string[] } {
+  const { result, newLocals } = prefixFreeIdentifiers(content.trim(), knownLocals);
+  const r = result.trimEnd();
+  const needsSemi = !r.endsWith(';') && !r.endsWith('{') && !r.endsWith('}');
+  return { line: `${result}${needsSemi ? ';' : ''}\n`, newLocals };
 }
 
 function generateVirtualTs(
@@ -103,34 +321,34 @@ function generateVirtualTs(
   let virtualTs = createHeader(relativeInterfacePath, interfaceName);
   const virtualTsMappings: TsMapping[] = [];
 
-  const localVars = collectLocalVars(expressions);
-
-  // Declare local variables so TypeScript knows they exist (type any — they
-  // come from JS control structures in execute tags, not from the interface).
-  for (const varName of localVars) {
-    virtualTs += `let ${varName}: any;\n`;
-  }
+  // knownLocals is accumulated in template order:
+  // each for/const/let/var execute tag adds its declared variable so that subsequent
+  // interpolate/raw tags and execute tags know not to prefix it with ctx.
+  const knownLocals = new Set<string>();
 
   for (const expr of expressions) {
-    // Execute tags contain JS statements (for, if, const, …) that cannot be
-    // meaningfully validated as ctx property accesses. Skip them entirely.
-    if (expr.type === 'execute') continue;
+    if (expr.type === 'execute') {
+      const tsStart = virtualTs.length;
+      const { line, newLocals } = transformExecute(expr.value, knownLocals);
+      virtualTs += line;
+      const tsEnd = virtualTs.length - 1; // exclude trailing newline
 
+      for (const local of newLocals) knownLocals.add(local);
+      virtualTsMappings.push({ exprId: expr.id, tsStart, tsEnd });
+      continue;
+    }
+
+    // interpolate / raw
     for (const ident of extractIdentifiers(expr.value)) {
       // include(...) is a template engine global — not a ctx property
       const isEngineGlobal = /^include\s*\(/.test(ident);
       // Variables declared in execute tags (for, const, …) are local — not ctx properties
-      const isLocal = localVars.has(ident.split(/[.\[( ]/)[0]);
+      const isLocal = knownLocals.has(ident.split(/[.[(]/)[0]);
       const line = isEngineGlobal || isLocal ? `${ident};\n` : `ctx.${ident};\n`;
       const tsStart = virtualTs.length + (isEngineGlobal || isLocal ? 0 : 'ctx.'.length);
       const tsEnd = tsStart + ident.length;
 
-      virtualTsMappings.push({
-        exprId: expr.id,
-        tsStart,
-        tsEnd,
-      });
-
+      virtualTsMappings.push({ exprId: expr.id, tsStart, tsEnd });
       virtualTs += line;
     }
   }

@@ -117,7 +117,7 @@ function findClose(str: string, closing: string): number {
       continue;
     }
 
-    if (str.startsWith(closing, i)) return i;
+    if (!inSingle && !inDouble && !inBack && str.startsWith(closing, i)) return i;
     i++;
   }
   return -1;
@@ -126,51 +126,53 @@ function findClose(str: string, closing: string): number {
 /** Splits a template string into a flat list of text / tag tokens. */
 function tokenize(
   template: string,
-  opening: string,
-  closing: string,
-  ipre: string,
-  rpre: string,
+  openingTag: string,
+  closingTag: string,
+  interpolationPrefix: string,
+  rawPrefix: string,
 ): Token[] {
   const tokens: Token[] = [];
   let rest = template;
 
   while (rest.length > 0) {
-    const oi = rest.indexOf(opening);
-    if (oi === -1) {
+    const openingIndex = rest.indexOf(openingTag);
+
+    if (openingIndex === -1) {
       tokens.push({ type: 'text', content: rest, full: rest });
       break;
     }
-    if (oi > 0) {
-      const t = rest.slice(0, oi);
-      tokens.push({ type: 'text', content: t, full: t });
+
+    if (openingIndex > 0) {
+      const untilOpening = rest.slice(0, openingIndex);
+      tokens.push({ type: 'text', content: untilOpening, full: untilOpening });
     }
 
-    const afterOpen = rest.slice(oi + opening.length);
+    const afterOpen = rest.slice(openingIndex + openingTag.length);
     let type: TokType = 'execute';
-    let plen = 0;
+    let prefixLen = 0;
 
-    if (ipre && afterOpen.startsWith(ipre)) {
+    if (interpolationPrefix && afterOpen.startsWith(interpolationPrefix)) {
       type = 'interpolate';
-      plen = ipre.length;
-    } else if (rpre && afterOpen.startsWith(rpre)) {
+      prefixLen = interpolationPrefix.length;
+    } else if (rawPrefix && afterOpen.startsWith(rawPrefix)) {
       type = 'raw';
-      plen = rpre.length;
+      prefixLen = rawPrefix.length;
     }
 
-    const inner = afterOpen.slice(plen);
-    const ci = findClose(inner, closing);
+    const inner = afterOpen.slice(prefixLen);
+    const ci = findClose(inner, closingTag);
 
     if (ci === -1) {
       // Malformed tag – treat everything remaining as plain text
-      const leftover = rest.slice(oi);
+      const leftover = rest.slice(openingIndex);
       tokens.push({ type: 'text', content: leftover, full: leftover });
       break;
     }
 
     const content = inner.slice(0, ci).trim();
-    const tagLen = opening.length + plen + ci + closing.length;
-    tokens.push({ type, content, full: rest.slice(oi, oi + tagLen) });
-    rest = rest.slice(oi + tagLen);
+    const tagLen = openingTag.length + prefixLen + ci + closingTag.length;
+    tokens.push({ type, content, full: rest.slice(openingIndex, openingIndex + tagLen) });
+    rest = rest.slice(openingIndex + tagLen);
   }
 
   return tokens;
@@ -314,16 +316,18 @@ function applyIndentation(
   let depth = 0;
   const out: string[] = [];
   let blanks = 0;
+  let skipBlanks = false;
 
   for (const raw of lines) {
     const trimmed = raw.trimStart();
 
     if (!trimmed) {
       blanks++;
-      if (blanks <= maxBlanks) out.push('');
+      if (!skipBlanks && blanks <= maxBlanks) out.push('');
       continue;
     }
     blanks = 0;
+    skipBlanks = false;
 
     if (isPureExecLine(trimmed, opening, ipre, rpre, closing)) {
       const inner = innerContent(trimmed, opening, closing);
@@ -334,12 +338,16 @@ function applyIndentation(
         depth = Math.max(0, depth - 1);
         out.push(indentUnit.repeat(depth) + trimmed);
         depth++;
+        skipBlanks = true;
       } else if (cls.blockClose) {
         depth = Math.max(0, depth - 1);
         out.push(indentUnit.repeat(depth) + trimmed);
       } else {
         out.push(indentUnit.repeat(depth) + trimmed);
-        if (cls.blockOpen) depth++;
+        if (cls.blockOpen) {
+          depth++;
+          skipBlanks = true;
+        }
       }
     } else {
       out.push(indentUnit.repeat(depth) + trimmed);
@@ -362,19 +370,32 @@ function applyIndentation(
  * @returns         Formatted template string.
  */
 export function format(template: string, options: FormatOptions = {}): string {
-  const o = { ...DEFAULTS, ...options };
-  const indentUnit = o.indentChar === 'tab' ? '\t' : ' '.repeat(o.indentSize);
+  const definitiveOptions: Required<FormatOptions> = { ...DEFAULTS, ...options };
+  const indentUnit =
+    definitiveOptions.indentChar === 'tab' ? '\t' : ' '.repeat(definitiveOptions.indentSize);
 
-  const tokens = tokenize(template, o.opening, o.closing, o.interpolatePrefix, o.rawPrefix);
-  const separated = separateTags(tokens, o.opening, o.closing, o.interpolatePrefix, o.rawPrefix);
+  const tokens = tokenize(
+    template,
+    definitiveOptions.opening,
+    definitiveOptions.closing,
+    definitiveOptions.interpolatePrefix,
+    definitiveOptions.rawPrefix,
+  );
+  const separated = separateTags(
+    tokens,
+    definitiveOptions.opening,
+    definitiveOptions.closing,
+    definitiveOptions.interpolatePrefix,
+    definitiveOptions.rawPrefix,
+  );
 
   return applyIndentation(
     separated,
-    o.opening,
-    o.closing,
-    o.interpolatePrefix,
-    o.rawPrefix,
+    definitiveOptions.opening,
+    definitiveOptions.closing,
+    definitiveOptions.interpolatePrefix,
+    definitiveOptions.rawPrefix,
     indentUnit,
-    o.maxBlankLines,
+    definitiveOptions.maxBlankLines,
   );
 }

@@ -2,7 +2,7 @@
 
 A Visual Studio Code extension that adds **language support** for the [TAO template engine](https://github.com/GreenFlag31/node-tao). Node-tao is a Nodejs template engine that focuses on performance, security, and developer experience.
 
-This extension provides a typescript language service giving **validation, hovering information, autocompletion** inside the template.
+This extension provides a typescript language service giving partial **validation, hovering information, autocompletion** inside the template (wip).
 
 ![Presentation](https://raw.githubusercontent.com/GreenFlag31/tao-vscode-extension/main/assets/presentation.gif)
 
@@ -36,7 +36,7 @@ const options = {
 export default options;
 ```
 
-> **`format`** (default: `true`) — When `true`, the extension formats your templates on save and on "Format Document" (Shift+Alt+F). Set to `false` to disable the TAO formatter entirely, for example if you prefer to handle formatting yourself.
+> **`format`** (default: `true`) — When `true`, the extension formats your templates on save and on "Format Document" (Shift+Alt+F). Select the tao extension as **default formatter** by right clicking on your template and click on `format document with`.
 
 ## 🎨 Customize TAO tags colors
 

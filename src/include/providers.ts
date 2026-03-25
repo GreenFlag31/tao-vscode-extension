@@ -19,7 +19,7 @@ function getIncludeProvider() {
 
         const includeItemData: CompletionItemSnippetData = {
           name: 'include',
-          insertText: 'include("${1}")',
+          insertText: 'include("${1}", { ${2} })',
           label: {
             label: 'include',
             detail: ' Tao template include function',
@@ -55,18 +55,14 @@ function getIncludeSignatureProvider() {
         const commaCount = (argText.match(/,/g) || []).length;
 
         const sig = new vscode.SignatureInformation(
-          'include(template: string, data?: object, helper?: object)',
-          'Includes a child template with optional context and helper functions.',
+          'include(templatePath: string, dataOrHelpers?: object)',
+          'Includes a child template with optional data and helper functions combined in a single object.',
         );
         sig.parameters = [
-          new vscode.ParameterInformation('template', 'Template name'),
+          new vscode.ParameterInformation('templatePath', 'Template file path'),
           new vscode.ParameterInformation(
-            'data',
-            'Object containing local variables. Children inherit data from the parent component.',
-          ),
-          new vscode.ParameterInformation(
-            'helper',
-            'Object containing helper functions. Children inherit helper functions from the parent component.',
+            'dataOrHelpers',
+            'Object containing both local variables and helper functions. Children inherit them from the parent component.',
           ),
         ];
         const MAX_TWO_PARAM = sig.parameters.length - 1;
@@ -102,22 +98,23 @@ function getIncludeHoverProvider() {
             '### TAO `include` Function',
             '',
             '```ts',
-            'render(template: string, data: Data = {}, helpers: Helpers = {}): string',
+            'include(templatePath: string, dataOrHelpers?: object): string',
             '```',
             '',
             '**Includes** a child template inside the current template.',
-            'Children automatically inherit `data` and `helpers` from the parent.',
+            'Children automatically inherit `dataOrHelpers` from the parent.',
+            'Pass both local variables and helper functions in the same object.',
             '',
             '**Example:**',
             '```html',
             '<!-- parent.html -->',
             '<h1><%= title %></h1>',
-            "<div><%~ include('child.html', { subtitle: 'Hello' }) %></div>",
+            "<div><%~ include('child.html', { subtitle: 'Hello', format: (s) => s.toUpperCase() }) %></div>",
             '```',
             '',
             '```html',
             '<!-- child.html -->',
-            '<h2><%= subtitle %></h2>',
+            '<h2><%= format(subtitle) %></h2>',
             '```',
           ].join('\n'),
         ),

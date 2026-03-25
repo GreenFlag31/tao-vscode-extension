@@ -23,9 +23,11 @@ function buildOptions(): FormatOptions {
 
 function getEdits(document: vscode.TextDocument): vscode.TextEdit[] {
   if (!isFormatterEnabled()) return [];
+
   const original = document.getText();
   const formatted = format(original, buildOptions());
   if (formatted === original) return [];
+  
   const range = new vscode.Range(document.positionAt(0), document.positionAt(original.length));
   return [vscode.TextEdit.replace(range, formatted)];
 }

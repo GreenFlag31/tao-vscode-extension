@@ -14,4 +14,4 @@
 
 ## [1.0.0] - 2025-09-23
 
-- Adding typescript language service, autocompletion, and basic formatting.
+- Adding typescript language service, autocompletion, and basic formatting (wip).

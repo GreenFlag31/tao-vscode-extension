@@ -1,5 +1,9 @@
 import * as vscode from 'vscode';
-import { createTemplatesFilesWatcher, getTemplatesFiles } from './templates/helpers.js';
+import {
+  createTemplatesFilesWatcher,
+  getTemplatesFiles,
+  templateDiagnosticCollection,
+} from './templates/helpers.js';
 import { createInitOptionsWatcher, getInitValues, initProviders } from './config/init-config.js';
 import { handleTypescript, tsDiagnosticCollection } from './virtualTS/helpers.js';
 import { languageService, setUnsavedFile } from './virtualTS/checker.js';
@@ -42,7 +46,9 @@ async function activate(context: vscode.ExtensionContext) {
         }
       }, 300);
     } else {
-      debounceTimer = setTimeout(() => handleTypescript(event.document), 300);
+      debounceTimer = setTimeout(() => {
+        handleTypescript(event.document);
+      }, 300);
     }
   });
 
@@ -54,6 +60,7 @@ async function activate(context: vscode.ExtensionContext) {
     onActiveEditorListener,
     onChangeListener,
     tsDiagnosticCollection,
+    templateDiagnosticCollection,
     languageService,
   );
 }

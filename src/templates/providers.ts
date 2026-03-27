@@ -18,7 +18,7 @@ function getTemplatesNameProvider() {
 
         const templates = excludeCurrentFileFromTemplatePropositions(
           completeTemplatesPath,
-          document.fileName
+          document.fileName,
         );
         const remainingTemplates = transformTemplatesNamesToCompletionItems(templates);
 
@@ -27,7 +27,7 @@ function getTemplatesNameProvider() {
     },
     '"',
     "'",
-    '`'
+    '`',
   );
 
   return templatesNameProvider;
@@ -39,10 +39,7 @@ function getTemplateLinkProvider() {
       const word = getTemplateNameFromTemplateInclude(document, position);
       if (!word) return;
 
-      const completeTemplatePath = findTemplateAccordingToTheNameClicked(
-        completeTemplatesPath,
-        word
-      );
+      const completeTemplatePath = findTemplateAccordingToTheNameClicked(word);
 
       if (!completeTemplatePath) return;
 
@@ -59,14 +56,14 @@ function getTemplateNameHoverProvider() {
       const word = getTemplateNameFromTemplateInclude(document, position);
       if (!word) return;
 
-      const template = completeTemplatesPath.find((template) => template.endsWith(word));
+      const template = findTemplateAccordingToTheNameClicked(word);
 
       if (!template) return;
 
       return new vscode.Hover(
         new vscode.MarkdownString(
-          `Child template included in this template.  \n\n Location: \`${template}\``
-        )
+          `Child template included in this template.  \n\n Location: \`${template}\``,
+        ),
       );
     },
   });

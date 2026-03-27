@@ -1,5 +1,5 @@
-import { Parse } from '../interfaces.js';
-import { Tags, TagType, TemplateData } from './interfaces.js';
+import { Parse, Tags } from '../interfaces.js';
+import { TagType, TemplateData } from './interfaces.js';
 
 function templateLexer(rawExpression: string, tags: Tags, parse: Parse) {
   const { opening, closing } = tags;

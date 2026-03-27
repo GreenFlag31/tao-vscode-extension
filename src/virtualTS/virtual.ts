@@ -1,8 +1,8 @@
 import path from 'path';
 import { TemplateData } from '../lexer/interfaces.js';
 import { getWorkspaceFolder, toImportPath } from './helpers.js';
-import { VIRTUAL_FILE_NAME } from './checker.js';
 import { TsMapping } from './interfaces.js';
+import { VIRTUAL_FILE_NAME } from '../config/const.js';
 
 // Le chemin du fichier virtuel tel que vu par le LanguageService TypeScript
 const virtualFilePath = path.join(getWorkspaceFolder(), VIRTUAL_FILE_NAME);
@@ -196,6 +196,7 @@ function prefixFreeIdentifiers(
         }
         i++;
       }
+
       continue;
     }
 
@@ -264,27 +265,31 @@ function prefixFreeIdentifiers(
         // This identifier is being declared — register as local, no ctx. prefix
         newLocals.push(ident);
         result += ident;
-      } else {
-        // Property access: find last non-whitespace char in result so far
-        let lastNonWs = '';
-        for (let k = result.length - 1; k >= 0; k--) {
-          if (result[k] !== ' ' && result[k] !== '\t' && result[k] !== '\n') {
-            lastNonWs = result[k];
-            break;
-          }
-        }
-        const allLocals = new Set([...knownLocals, ...newLocals]);
-        if (
-          lastNonWs !== '.' &&
-          !JS_KEYWORDS.has(ident) &&
-          !JS_GLOBALS.has(ident) &&
-          !allLocals.has(ident)
-        ) {
-          result += `ctx.${ident}`;
-        } else {
-          result += ident;
+        continue;
+      }
+
+      // Property access: find last non-whitespace char in result so far
+      let lastNonWs = '';
+      for (let k = result.length - 1; k >= 0; k--) {
+        if (result[k] !== ' ' && result[k] !== '\t' && result[k] !== '\n') {
+          lastNonWs = result[k];
+          break;
         }
       }
+
+      const allLocals = new Set([...knownLocals, ...newLocals]);
+
+      if (
+        lastNonWs !== '.' &&
+        !JS_KEYWORDS.has(ident) &&
+        !JS_GLOBALS.has(ident) &&
+        !allLocals.has(ident)
+      ) {
+        result += `ctx.${ident}`;
+      } else {
+        result += ident;
+      }
+
       continue;
     }
 

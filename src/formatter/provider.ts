@@ -27,7 +27,7 @@ function getEdits(document: vscode.TextDocument): vscode.TextEdit[] {
   const original = document.getText();
   const formatted = format(original, buildOptions());
   if (formatted === original) return [];
-  
+
   const range = new vscode.Range(document.positionAt(0), document.positionAt(original.length));
   return [vscode.TextEdit.replace(range, formatted)];
 }
@@ -52,6 +52,7 @@ export function createFormattingProvider(): vscode.Disposable[] {
 
   const formatOnSave = vscode.workspace.onWillSaveTextDocument((event) => {
     if (!event.document.fileName.endsWith(`.${getExtension()}`)) return;
+
     event.waitUntil(Promise.resolve(getEdits(event.document)));
   });
 

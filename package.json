@@ -21,8 +21,7 @@
     "url": "https://github.com/GreenFlag31/tao-vscode-extension.git"
   },
   "activationEvents": [
-    "onLanguage:html",
-    "onLanguage:javascript"
+    "onStartupFinished"
   ],
   "contributes": {
     "grammars": [
@@ -63,8 +62,9 @@
     "@vscode/test-cli": "^0.0.11",
     "@vscode/test-electron": "^2.5.2",
     "esbuild": "^0.25.9",
-    "eslint": "^9.25.1",
-    "typescript": "^5.8.3"
+    "eslint": "^9.25.1"
   },
-  "dependencies": {}
+  "dependencies": {
+    "typescript": "^5.8.3"
+  }
 }

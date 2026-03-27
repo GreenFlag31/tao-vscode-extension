@@ -8,12 +8,16 @@ import { typeCheck, updateVirtualTs, languageService, getVirtualFileName } from 
 import ts from 'typescript';
 import { TemplateError, TsMapping } from './interfaces.js';
 import { TemplateData } from '../lexer/interfaces.js';
+import { validateTemplateIncludes } from '../templates/helpers.js';
 
 const tsDiagnosticCollection = vscode.languages.createDiagnosticCollection();
 const documentState = new Map<
   string,
   { tokens: TemplateData[]; virtualTsMappings: TsMapping[]; virtualTs: string }
 >();
+
+let isRunning = false;
+let pendingDocument: vscode.TextDocument | undefined;
 
 function getWorkspaceFolder() {
   const workspaceFolder = vscode.workspace.workspaceFolders?.[0].uri.fsPath ?? process.cwd();
@@ -32,7 +36,28 @@ async function handleTypescript(document: vscode.TextDocument | undefined) {
     return;
   }
 
+  if (isRunning) {
+    pendingDocument = document;
+    return;
+  }
+
+  isRunning = true;
+  try {
+    await processTypescript(document);
+  } finally {
+    isRunning = false;
+    if (pendingDocument) {
+      const next = pendingDocument;
+      pendingDocument = undefined;
+      await handleTypescript(next);
+    }
+  }
+}
+
+async function processTypescript(document: vscode.TextDocument) {
   const typescriptFiles = await getTypescriptFiles();
+
+  validateTemplateIncludes(document);
 
   const { interfaceName, absoluteInterfacePath } = await extractTemplateInterfacesFromRender(
     document.fileName,
@@ -192,7 +217,9 @@ function mapDiagnosticsToTemplate(
       templateExpression: rawTemplate.slice(expr.startPos, expr.endPos),
       startPos: valueStart,
       endPos: valueEnd,
-      message: ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n'),
+      message: ts
+        .flattenDiagnosticMessageText(diagnostic.messageText, '\n')
+        .replace(/\bctx\./g, ''),
     });
   }
 

@@ -75,11 +75,4 @@ function typeCheck(virtualTs: string) {
   return languageService.getSemanticDiagnostics(getVirtualFileName());
 }
 
-export {
-  typeCheck,
-  updateVirtualTs,
-  languageService,
-  getVirtualFileName,
-  VIRTUAL_FILE_NAME,
-  setUnsavedFile,
-};
+export { typeCheck, updateVirtualTs, languageService, getVirtualFileName, setUnsavedFile };

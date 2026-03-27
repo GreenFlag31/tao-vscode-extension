@@ -279,6 +279,99 @@ function separateTags(
   return parts.join('');
 }
 
+// ─── HTML indentation support ─────────────────────────────────────────────────
+
+/** HTML tags whose opening / closing affects indentation depth. */
+const HTML_BLOCK_TAGS = new Set([
+  'html',
+  'head',
+  'body',
+  'div',
+  'section',
+  'article',
+  'main',
+  'header',
+  'footer',
+  'nav',
+  'aside',
+  'form',
+  'fieldset',
+  'table',
+  'thead',
+  'tbody',
+  'tfoot',
+  'tr',
+  'colgroup',
+  'ul',
+  'ol',
+  'dl',
+  'select',
+  'optgroup',
+  'details',
+  'figure',
+  'dialog',
+  'script',
+  'style',
+  'li',
+  'td',
+  'th',
+  'dt',
+  'dd',
+  'option',
+]);
+
+/** HTML void / always-self-closing tags that never affect indentation depth. */
+const HTML_VOID_TAGS = new Set([
+  'area',
+  'base',
+  'br',
+  'col',
+  'embed',
+  'hr',
+  'img',
+  'input',
+  'link',
+  'meta',
+  'param',
+  'source',
+  'track',
+  'wbr',
+]);
+
+/** Matches a single HTML opening or closing tag (including optional attributes). */
+const HTML_TAG_RE = /<\/?([a-zA-Z][a-zA-Z0-9]*)(\s[^>]*)?\/?>/g;
+
+/**
+ * Returns depth adjustments implied by HTML block tags on a single (trimmed) line:
+ *  - `before`: decrement depth by this value BEFORE emitting the line.
+ *  - `after`:  increment depth by this value AFTER emitting the line.
+ *
+ * Matching open/close pairs on the same line cancel each other out
+ * (e.g. `<li>text</li>` → { before: 0, after: 0 }).
+ */
+function htmlDepthChange(line: string): { before: number; after: number } {
+  let opens = 0;
+  let closes = 0;
+
+  HTML_TAG_RE.lastIndex = 0;
+  let m: RegExpExecArray | null;
+  while ((m = HTML_TAG_RE.exec(line)) !== null) {
+    const full = m[0];
+    const tag = m[1].toLowerCase();
+    if (!HTML_BLOCK_TAGS.has(tag) || HTML_VOID_TAGS.has(tag)) continue;
+
+    if (full.startsWith('</')) {
+      closes++;
+    } else if (!full.endsWith('/>')) {
+      opens++;
+    }
+  }
+
+  if (closes > opens) return { before: closes - opens, after: 0 };
+  if (opens > closes) return { before: 0, after: opens - closes };
+  return { before: 0, after: 0 };
+}
+
 // ─── Step 2 – apply indentation ───────────────────────────────────────────────
 
 /**
@@ -350,7 +443,10 @@ function applyIndentation(
         }
       }
     } else {
+      const { before, after } = htmlDepthChange(trimmed);
+      depth = Math.max(0, depth - before);
       out.push(indentUnit.repeat(depth) + trimmed);
+      depth += after;
     }
   }
 

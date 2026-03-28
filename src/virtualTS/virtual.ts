@@ -8,7 +8,9 @@ import { VIRTUAL_FILE_NAME } from '../config/const.js';
 const virtualFilePath = path.join(getWorkspaceFolder(), VIRTUAL_FILE_NAME);
 
 /**
- * IIFE function to be invisible to typescript, otherwise it is included in the functions propositions
+ * Creates the virtual TypeScript file.
+ * Ctx properties will be matched against the provided interface.
+ * IIFE function to avoid polluting the scope.
  */
 function createHeader(interfacePath: string, interfaceName: string) {
   return `import type { ${interfaceName} } from '${interfacePath}';

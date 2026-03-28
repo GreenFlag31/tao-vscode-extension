@@ -231,7 +231,7 @@ function separateTags(
 
   const ensureNlBefore = () => {
     const last = parts[parts.length - 1] ?? '';
-    if (last !== '' && !last.endsWith('\n')) parts.push('\n');
+    if (last !== '' && !/\n\s*$/.test(last)) parts.push('\n');
   };
 
   for (let i = 0; i < tokens.length; i++) {

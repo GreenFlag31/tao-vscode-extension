@@ -53,7 +53,9 @@ async function getInitOptions(): Promise<InitReturn> {
 
     // cache buster
     const configPath = pathToFileURL(options[0].fsPath).href + `?update=${Date.now()}`;
-    const optionsParsed = await import(configPath);
+    // Use new Function to prevent esbuild from transforming import() into require()
+    const dynamicImport = new Function('url', 'return import(url)');
+    const optionsParsed = await dynamicImport(configPath);
     const configuration = optionsParsed.default;
     const isConfigurationValid = isAValidConfiguration(configuration);
 

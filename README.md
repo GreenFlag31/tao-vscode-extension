@@ -12,7 +12,6 @@ This extension provides a typescript language service giving partial **validatio
 - **Tag completion** – Autocompletion for TAO template tags.
 - **Include support** – Suggestions and signature help for `include(...)`.
 - **Control structures** – Snippets and completions for `if`, `for`, `for-in`, and `for-of` with tags with syntax colors for html files.
-- **User data injection** – Autocompletion for variables and helpers injected in the template.
 - **Template names provider** – An `include` will suggest child templates of your project.
 - **Template navigation** – Go to the file definition for an embedded child template in an `include`, hover to get the complete filepath.
 

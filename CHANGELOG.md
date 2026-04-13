@@ -15,3 +15,7 @@
 ## [1.0.0] - 2025-09-23
 
 - Adding typescript language service, autocompletion, and basic formatting (wip).
+
+## [1.0.8] - 2025-09-23
+
+- Fixed dubble typescript error indications in template. Improvements of typescript hovering in execute tags (`if`, `for ... of`).

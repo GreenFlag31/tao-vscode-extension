@@ -57,7 +57,7 @@ function transformTemplatesNamesToCompletionItems(templates: string[]) {
   return completionTemplateItems;
 }
 
-function validateTemplateIncludes(document: vscode.TextDocument) {
+function validateTemplateNameInsideIncludes(document: vscode.TextDocument) {
   const text = document.getText();
   const diagnostics: vscode.Diagnostic[] = [];
 
@@ -127,6 +127,6 @@ export {
   transformTemplatesNamesToCompletionItems,
   getTemplateNameFromTemplateInclude,
   findTemplateAccordingToTheNameClicked,
-  validateTemplateIncludes,
+  validateTemplateNameInsideIncludes,
   templateDiagnosticCollection,
 };

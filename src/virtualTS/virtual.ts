@@ -145,6 +145,12 @@ const JS_GLOBALS = new Set([
 
 const DECL_KEYWORDS = new Set(['const', 'let', 'var']);
 
+interface IdentMapping {
+  srcStart: number;
+  srcEnd: number;
+  dstStart: number; // points at the identifier itself (after ctx. if added)
+}
+
 /**
  * Rewrites free identifiers in `expr` to `ctx.ident`, skipping:
  *  - JS keywords and built-in globals
@@ -158,12 +164,15 @@ const DECL_KEYWORDS = new Set(['const', 'let', 'var']);
 function prefixFreeIdentifiers(
   expr: string,
   knownLocals: Set<string>,
-): { result: string; newLocals: string[] } {
-  const newLocals: string[] = [];
+  srcOffset = 0, // offset of `expr` within the original execute value (for recursion)
+): { result: string; newLocals: Set<string>; identMappings: IdentMapping[] } {
+  const newLocals = new Set<string>();
+  const identMappings: IdentMapping[] = [];
   let result = '';
   let i = 0;
   const len = expr.length;
   let prevKeyword = ''; // last keyword token seen (kept across whitespace)
+  let lastNonWs = ''; // last non-whitespace character appended to result
 
   while (i < len) {
     const ch = expr[i];
@@ -172,12 +181,13 @@ function prefixFreeIdentifiers(
     if (ch === ' ' || ch === '\t' || ch === '\n' || ch === '\r') {
       result += ch;
       i++;
-      continue;
+      continue; // lastNonWs unchanged
     }
 
     // Single or double quoted string — copy verbatim
     if (ch === '"' || ch === "'") {
       prevKeyword = '';
+      lastNonWs = ch;
       const close = ch;
       result += ch;
       i++;
@@ -193,9 +203,11 @@ function prefixFreeIdentifiers(
           continue;
         }
         if (c === close) {
+          lastNonWs = c;
           i++;
           break;
         }
+        lastNonWs = c;
         i++;
       }
 
@@ -205,6 +217,7 @@ function prefixFreeIdentifiers(
     // Template literal — copy verbatim, recurse into ${…}
     if (ch === '`') {
       prevKeyword = '';
+      lastNonWs = ch;
       result += ch;
       i++;
       while (i < len) {
@@ -219,6 +232,7 @@ function prefixFreeIdentifiers(
           continue;
         }
         if (c === '`') {
+          lastNonWs = c;
           result += c;
           i++;
           break;
@@ -228,6 +242,8 @@ function prefixFreeIdentifiers(
           i += 2;
           let depth = 1;
           let inner = '';
+          const innerSrcStart = i;
+
           while (i < len && depth > 0) {
             const ic = expr[i];
             if (ic === '{') depth++;
@@ -238,15 +254,29 @@ function prefixFreeIdentifiers(
             inner += ic;
             i++;
           }
-          const sub = prefixFreeIdentifiers(inner, new Set([...knownLocals, ...newLocals]));
+
+          const sub = prefixFreeIdentifiers(
+            inner,
+            new Set([...knownLocals, ...newLocals]),
+            srcOffset + innerSrcStart,
+          );
+          const dstBase = result.length;
           result += sub.result;
-          newLocals.push(...sub.newLocals);
+          for (const local of sub.newLocals) newLocals.add(local);
+
+          for (const im of sub.identMappings) {
+            identMappings.push({ ...im, dstStart: dstBase + im.dstStart });
+          }
+
           if (i < len) {
+            lastNonWs = '}';
             result += '}';
             i++;
           }
           continue;
         }
+
+        lastNonWs = c;
         result += c;
         i++;
       }
@@ -265,30 +295,36 @@ function prefixFreeIdentifiers(
 
       if (isDeclPosition) {
         // This identifier is being declared — register as local, no ctx. prefix
-        newLocals.push(ident);
+        newLocals.add(ident);
+        lastNonWs = ident.at(-1)!;
         result += ident;
         continue;
       }
-
-      // Property access: find last non-whitespace char in result so far
-      let lastNonWs = '';
-      for (let k = result.length - 1; k >= 0; k--) {
-        if (result[k] !== ' ' && result[k] !== '\t' && result[k] !== '\n') {
-          lastNonWs = result[k];
-          break;
-        }
-      }
-
-      const allLocals = new Set([...knownLocals, ...newLocals]);
 
       if (
         lastNonWs !== '.' &&
         !JS_KEYWORDS.has(ident) &&
         !JS_GLOBALS.has(ident) &&
-        !allLocals.has(ident)
+        !knownLocals.has(ident) &&
+        !newLocals.has(ident)
       ) {
+        identMappings.push({
+          srcStart: srcOffset + i - ident.length,
+          srcEnd: srcOffset + i,
+          dstStart: result.length + 'ctx.'.length,
+        });
+        lastNonWs = ident.at(-1)!;
         result += `ctx.${ident}`;
       } else {
+        if (lastNonWs !== '.' && !JS_KEYWORDS.has(ident) && !JS_GLOBALS.has(ident)) {
+          // local variable — still trackable for hover
+          identMappings.push({
+            srcStart: srcOffset + i - ident.length,
+            srcEnd: srcOffset + i,
+            dstStart: result.length,
+          });
+        }
+        lastNonWs = ident.at(-1)!;
         result += ident;
       }
 
@@ -297,26 +333,28 @@ function prefixFreeIdentifiers(
 
     // Any other character — reset prevKeyword
     prevKeyword = '';
+    lastNonWs = ch;
     result += ch;
     i++;
   }
 
-  return { result, newLocals };
+  return { result, newLocals, identMappings };
 }
 
 /**
  * Transforms a single execute-tag content into a valid TypeScript statement
  * by delegating entirely to prefixFreeIdentifiers.
- * Returns the transformed line and any new local variable names it introduces.
+ * Returns the transformed line, new local variable names, and per-identifier source↔dest mappings.
  */
 function transformExecute(
   content: string,
   knownLocals: Set<string>,
-): { line: string; newLocals: string[] } {
-  const { result, newLocals } = prefixFreeIdentifiers(content.trim(), knownLocals);
+): { line: string; newLocals: Set<string>; identMappings: IdentMapping[] } {
+  const trimmed = content.trim();
+  const { result, newLocals, identMappings } = prefixFreeIdentifiers(trimmed, knownLocals);
   const r = result.trimEnd();
   const needsSemi = !r.endsWith(';') && !r.endsWith('{') && !r.endsWith('}');
-  return { line: `${result}${needsSemi ? ';' : ''}\n`, newLocals };
+  return { line: `${result}${needsSemi ? ';' : ''}\n`, newLocals, identMappings };
 }
 
 function generateVirtualTs(
@@ -335,13 +373,22 @@ function generateVirtualTs(
 
   for (const expr of expressions) {
     if (expr.type === 'execute') {
-      const tsStart = virtualTs.length;
-      const { line, newLocals } = transformExecute(expr.value, knownLocals);
+      const lineStart = virtualTs.length;
+      const { line, newLocals, identMappings } = transformExecute(expr.value, knownLocals);
       virtualTs += line;
-      const tsEnd = virtualTs.length - 1; // exclude trailing newline
 
       for (const local of newLocals) knownLocals.add(local);
-      virtualTsMappings.push({ exprId: expr.id, tsStart, tsEnd });
+
+      // Emit one mapping per identifier so hover can pinpoint the exact TS position
+      for (const im of identMappings) {
+        virtualTsMappings.push({
+          exprId: expr.id,
+          tsStart: lineStart + im.dstStart,
+          tsEnd: lineStart + im.dstStart + (im.srcEnd - im.srcStart),
+          srcStart: im.srcStart,
+          srcEnd: im.srcEnd,
+        });
+      }
       continue;
     }
 

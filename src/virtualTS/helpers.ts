@@ -8,9 +8,9 @@ import { typeCheck, updateVirtualTs, languageService, getVirtualFileName } from 
 import ts from 'typescript';
 import { TemplateError, TsMapping } from './interfaces.js';
 import { TemplateData } from '../lexer/interfaces.js';
-import { validateTemplateIncludes } from '../templates/helpers.js';
+import { validateTemplateNameInsideIncludes } from '../templates/helpers.js';
 
-const tsDiagnosticCollection = vscode.languages.createDiagnosticCollection();
+const tsDiagnosticCollection = vscode.languages.createDiagnosticCollection('tao-ts');
 const documentState = new Map<
   string,
   { tokens: TemplateData[]; virtualTsMappings: TsMapping[]; virtualTs: string }
@@ -35,7 +35,7 @@ async function handleTypescript(document: vscode.TextDocument | undefined) {
 
   const typescriptFiles = await getTypescriptFiles();
 
-  validateTemplateIncludes(document);
+  validateTemplateNameInsideIncludes(document);
 
   const { interfaceName, absoluteInterfacePath } = await extractTemplateInterfacesFromRender(
     document.fileName,
@@ -156,7 +156,6 @@ function resolveInterface(filePath: string, content: string, interfaceName: stri
  */
 function toImportPath(virtualTsFilePath: string, interfaceAbsPath: string): string {
   const virtualDir = path.dirname(virtualTsFilePath);
-  // Replace .ts / .d.ts with .js — the Language Service uses NodeNext
   const withJsExt = interfaceAbsPath.replace(/\.d\.ts$|\.ts$/, '.js');
 
   let relativePath = path.relative(virtualDir, withJsExt);
@@ -197,7 +196,7 @@ function mapDiagnosticsToTemplate(
       endPos: valueEnd,
       message: ts
         .flattenDiagnosticMessageText(diagnostic.messageText, '\n')
-        .replace(/\bctx\./g, ''),
+        .replace(/\bctx\./g, ''), // if ctx is displayed to the user
     });
   }
 
@@ -219,18 +218,29 @@ function getTsHoverProvider() {
         const expr = tokens.find((t) => hoverOffset >= t.startPos && hoverOffset < t.endPos);
         if (!expr) return undefined;
 
-        const mapping = virtualTsMappings.find((m) => m.exprId === expr.id);
-        if (!mapping) return undefined;
-
         // Compute where the trimmed value actually starts in the raw template
-        const { valueStart } = correctStartingOrEndingPositions(rawTemplate, expr);
+        const { valueStart, valueEnd } = correctStartingOrEndingPositions(rawTemplate, expr);
 
-        if (hoverOffset < valueStart || hoverOffset >= valueStart + expr.value.length) {
+        if (hoverOffset < valueStart || hoverOffset >= valueEnd) {
           return undefined;
         }
 
         const offsetInValue = hoverOffset - valueStart;
-        const tsQueryPos = Math.min(mapping.tsStart + offsetInValue, mapping.tsEnd - 1);
+
+        // For execute tags, each identifier has its own mapping with srcStart/srcEnd.
+        // Find the one whose source span covers the current cursor position.
+        // For interpolate/raw, there is one mapping per expression (no srcStart).
+        const mapping = virtualTsMappings.find((m) => {
+          if (m.exprId !== expr.id) return false;
+          if (m.srcStart === undefined) return true;
+          return offsetInValue >= m.srcStart && offsetInValue < m.srcEnd!;
+        });
+
+        if (!mapping) return undefined;
+
+        const identOffset =
+          mapping.srcStart !== undefined ? offsetInValue - mapping.srcStart : offsetInValue;
+        const tsQueryPos = Math.min(mapping.tsStart + identOffset, mapping.tsEnd - 1);
 
         const quickInfo = languageService.getQuickInfoAtPosition(getVirtualFileName(), tsQueryPos);
         if (!quickInfo) return undefined;
@@ -285,18 +295,22 @@ function autoClose(text: string): string {
 
   for (let i = 0; i < text.length; i++) {
     const ch = text[i];
+
     if (inString) {
       if (ch === '\\') {
         i++;
         continue;
       }
+
       if (ch === inString) inString = null;
       continue;
     }
+
     if (ch === '"' || ch === "'" || ch === '`') {
       inString = ch;
       continue;
     }
+
     if (ch in pairs) closes.push(pairs[ch]);
     else if (ch === ')' || ch === ']' || ch === '}') closes.pop();
   }

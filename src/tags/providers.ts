@@ -4,6 +4,7 @@ import {
   escapeRegExp,
   getLineTextUntilPosition,
   isCursorInsideCompletionItemGlobal,
+  isCursorInsideTag,
 } from '../utils.js';
 import { CompletionItemSnippetData } from '../interfaces.js';
 import { values } from '../config/init-config.js';
@@ -13,15 +14,11 @@ function getTagsProvider() {
     { language: values.extension, scheme: 'file' },
     {
       provideCompletionItems(document, position) {
-        const text = getLineTextUntilPosition(document, position);
-
-        const alreadyInsideTag = new RegExp(
-          `${escapeRegExp(values.opening)}[^${escapeRegExp(values.closing)}]*$`,
-        );
-
-        if (alreadyInsideTag.test(text)) {
+        if (isCursorInsideTag(document, position, values.opening, values.closing)) {
           return undefined;
         }
+
+        const text = getLineTextUntilPosition(document, position);
 
         const WHOLE_INCLUDE = /include\([^)]*\)?/dg;
         if (isCursorInsideCompletionItemGlobal(document, position, WHOLE_INCLUDE)) {
@@ -89,6 +86,10 @@ function getIfWithTagsProvider() {
     { language: values.extension, scheme: 'file' },
     {
       provideCompletionItems(document, position) {
+        if (isCursorInsideTag(document, position, values.opening, values.closing)) {
+          return undefined;
+        }
+
         const WHOLE_INCLUDE = /include\([^)]*\)?/dg;
         if (isCursorInsideCompletionItemGlobal(document, position, WHOLE_INCLUDE)) {
           return undefined;
@@ -118,7 +119,6 @@ function getIfWithTagsProvider() {
         return createCompletionItemSnippet(data);
       },
     },
-    'ifWithTags',
   );
 
   return ifWithTagsProvider;
@@ -129,6 +129,10 @@ function getForWithTagsProvider() {
     { language: values.extension, scheme: 'file' },
     {
       provideCompletionItems(document, position) {
+        if (isCursorInsideTag(document, position, values.opening, values.closing)) {
+          return undefined;
+        }
+
         const WHOLE_INCLUDE = /include\([^)]*\)?/dg;
         if (isCursorInsideCompletionItemGlobal(document, position, WHOLE_INCLUDE)) {
           return undefined;
@@ -165,7 +169,6 @@ function getForWithTagsProvider() {
         return forCompletionItem;
       },
     },
-    'forWithTags',
   );
 
   return forWithTagsProvider;
@@ -176,6 +179,10 @@ function getForInWithTagsProvider() {
     { language: values.extension, scheme: 'file' },
     {
       provideCompletionItems(document, position) {
+        if (isCursorInsideTag(document, position, values.opening, values.closing)) {
+          return undefined;
+        }
+
         const WHOLE_INCLUDE = /include\([^)]*\)?/dg;
         if (isCursorInsideCompletionItemGlobal(document, position, WHOLE_INCLUDE)) {
           return undefined;
@@ -216,7 +223,6 @@ function getForInWithTagsProvider() {
         return forInCompletionItem;
       },
     },
-    'forInWithTags',
   );
 
   return forInWithTagsProvider;
@@ -227,6 +233,10 @@ function getForOfWithTagsProvider() {
     { language: values.extension, scheme: 'file' },
     {
       provideCompletionItems(document, position) {
+        if (isCursorInsideTag(document, position, values.opening, values.closing)) {
+          return undefined;
+        }
+
         const WHOLE_INCLUDE = /include\([^)]*\)?/dg;
         if (isCursorInsideCompletionItemGlobal(document, position, WHOLE_INCLUDE)) {
           return undefined;
@@ -256,7 +266,6 @@ function getForOfWithTagsProvider() {
         return createCompletionItemSnippet(data);
       },
     },
-    'forOfWithTags',
   );
 
   return forOfWithTagsProvider;
@@ -267,6 +276,10 @@ function getIncludeWithTagsProvider() {
     { language: values.extension, scheme: 'file' },
     {
       provideCompletionItems(document, position) {
+        if (isCursorInsideTag(document, position, values.opening, values.closing)) {
+          return undefined;
+        }
+
         const WHOLE_INCLUDE = /include\([^)]*\)?/dg;
         if (isCursorInsideCompletionItemGlobal(document, position, WHOLE_INCLUDE)) {
           return undefined;
@@ -289,7 +302,6 @@ function getIncludeWithTagsProvider() {
         return createCompletionItemSnippet(data);
       },
     },
-    'includeWithTags',
   );
 
   return forOfWithTagsProvider;

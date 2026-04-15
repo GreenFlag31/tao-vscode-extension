@@ -9,6 +9,7 @@ This extension provides a typescript language service giving partial **validatio
 ## ✨ Features
 
 - **Language Service** – Typescript validation, hovering information, autocompletion available inside a template.
+- **Formatting** – Basic formatter covering html and node-tao native tags.
 - **Tag completion** – Autocompletion for TAO template tags.
 - **Include support** – Suggestions and signature help for `include(...)`.
 - **Control structures** – Snippets and completions for `if`, `for`, `for-in`, and `for-of` with tags with syntax colors for html files.

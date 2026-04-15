@@ -64,6 +64,20 @@ function isCursorInsideCompletionItemGlobal(
 }
 
 /**
+ * Detects if the cursor is positioned inside an unclosed opening tag on the current line.
+ */
+function isCursorInsideTag(
+  document: vscode.TextDocument,
+  position: vscode.Position,
+  opening: string,
+  closing: string,
+) {
+  const text = getLineTextUntilPosition(document, position);
+  const insideTag = new RegExp(`${escapeRegExp(opening)}[^${escapeRegExp(closing)}]*$`);
+  return insideTag.test(text);
+}
+
+/**
  * Escape special regular expression characters inside a string
  */
 function escapeRegExp(string: string) {
@@ -78,4 +92,5 @@ export {
   createCompletionItemSnippet,
   escapeRegExp,
   isCursorInsideCompletionItemGlobal,
+  isCursorInsideTag,
 };

@@ -316,8 +316,8 @@ function prefixFreeIdentifiers(
         lastNonWs = ident.at(-1)!;
         result += `ctx.${ident}`;
       } else {
-        if (lastNonWs !== '.' && !JS_KEYWORDS.has(ident) && !JS_GLOBALS.has(ident)) {
-          // local variable — still trackable for hover
+        if (!JS_KEYWORDS.has(ident) && !JS_GLOBALS.has(ident)) {
+          // local variable or chained property (e.g. city in address.city) — trackable for hover
           identMappings.push({
             srcStart: srcOffset + i - ident.length,
             srcEnd: srcOffset + i,
@@ -409,7 +409,7 @@ function generateVirtualTs(
 
   virtualTs += createFooter();
 
-  return { virtualTs, virtualTsMappings };
+  return { virtualTs, virtualTsMappings, knownLocals };
 }
 
-export { generateVirtualTs };
+export { generateVirtualTs, prefixFreeIdentifiers };

@@ -3,7 +3,7 @@ import path from 'path';
 import { values } from '../config/init-config.js';
 import { normalizeWindowsPath } from '../utils.js';
 import { getTemplateTokens } from '../lexer/store.js';
-import { generateVirtualTs } from './virtual.js';
+import { generateVirtualTs, prefixFreeIdentifiers } from './virtual.js';
 import { typeCheck, updateVirtualTs, languageService, getVirtualFileName } from './checker.js';
 import ts from 'typescript';
 import { TemplateError, TsMapping } from './interfaces.js';
@@ -13,7 +13,12 @@ import { validateTemplateNameInsideIncludes } from '../templates/helpers.js';
 const tsDiagnosticCollection = vscode.languages.createDiagnosticCollection('tao-ts');
 const documentState = new Map<
   string,
-  { tokens: TemplateData[]; virtualTsMappings: TsMapping[]; virtualTs: string }
+  {
+    tokens: TemplateData[];
+    virtualTsMappings: TsMapping[];
+    virtualTs: string;
+    knownLocals: Set<string>;
+  }
 >();
 
 function getWorkspaceFolder() {
@@ -50,7 +55,7 @@ async function handleTypescript(document: vscode.TextDocument | undefined) {
 
   const templateTokens = getTemplateTokens(document);
 
-  const { virtualTs, virtualTsMappings } = generateVirtualTs(
+  const { virtualTs, virtualTsMappings, knownLocals } = generateVirtualTs(
     templateTokens,
     absoluteInterfacePath,
     interfaceName,
@@ -80,6 +85,7 @@ async function handleTypescript(document: vscode.TextDocument | undefined) {
     tokens: templateTokens,
     virtualTsMappings,
     virtualTs,
+    knownLocals,
   });
 }
 
@@ -354,18 +360,25 @@ function getTsCompletionProvider() {
           exprStart++;
         }
 
-        const { virtualTs } = state;
+        const { virtualTs, knownLocals } = state;
         const insertPos = virtualTs.lastIndexOf('}');
 
         // include(...) is an engine global — must not be prefixed with ctx.
         // Close any unclosed brackets so TypeScript can infer argument types.
         const typedText = rawTemplate.slice(exprStart, cursorOffset);
         const isInclude = /^include\s*\(/.test(typedText.trimStart());
-        const closedText = isInclude ? autoClose(typedText) : typedText;
 
-        const prefix = isInclude ? '' : 'ctx.';
-        const probe = `${virtualTs.slice(0, insertPos)}${prefix}${closedText}\n}`;
-        const queryPos = insertPos + prefix.length + typedText.length;
+        let transformedText: string;
+        if (isInclude) {
+          transformedText = autoClose(typedText);
+        } else {
+          const { result } = prefixFreeIdentifiers(typedText, knownLocals);
+          transformedText = result;
+        }
+
+        const probe = `${virtualTs.slice(0, insertPos)}${transformedText}\n}`;
+        const queryPos = insertPos + transformedText.length;
+        // console.log(probe);
 
         updateVirtualTs(probe);
         const completions = languageService.getCompletionsAtPosition(

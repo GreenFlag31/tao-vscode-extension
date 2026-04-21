@@ -297,28 +297,60 @@ function tsKindToVsKind(kind: string): vscode.CompletionItemKind {
 function autoClose(text: string): string {
   const closes: string[] = [];
   const pairs: Record<string, string> = { '(': ')', '[': ']', '{': '}' };
+  const stack: Array<'normal' | 'template' | 'interp'> = ['normal'];
   let inString: string | null = null;
 
   for (let i = 0; i < text.length; i++) {
     const ch = text[i];
+    const ctx = stack[stack.length - 1];
 
+    // Inside single/double quoted string
     if (inString) {
       if (ch === '\\') {
         i++;
         continue;
       }
-
       if (ch === inString) inString = null;
       continue;
     }
 
-    if (ch === '"' || ch === "'" || ch === '`') {
-      inString = ch;
+    // Inside template literal body (not inside ${})
+    if (ctx === 'template') {
+      if (ch === '\\') {
+        i++;
+        continue;
+      }
+      if (ch === '`') {
+        stack.pop();
+        closes.pop(); // remove the '`' we pushed
+        continue;
+      }
+      if (ch === '$' && text[i + 1] === '{') {
+        i++; // skip '{'
+        closes.push('}');
+        stack.push('interp');
+        continue;
+      }
       continue;
     }
 
-    if (ch in pairs) closes.push(pairs[ch]);
-    else if (ch === ')' || ch === ']' || ch === '}') closes.pop();
+    // Normal or interp context
+    if (ch === "'" || ch === '"') {
+      inString = ch;
+      continue;
+    }
+    if (ch === '`') {
+      closes.push('`');
+      stack.push('template');
+      continue;
+    }
+
+    if (ch in pairs) {
+      closes.push(pairs[ch]);
+    } else if (ch === ')' || ch === ']' || ch === '}') {
+      closes.pop();
+      if (ch === '}' && ctx === 'interp') stack.pop(); // back to template
+    }
   }
 
   return text + closes.reverse().join('');
@@ -369,15 +401,21 @@ function getTsCompletionProvider() {
         const isInclude = /^include\s*\(/.test(typedText.trimStart());
 
         let transformedText: string;
+        let queryLength: number;
         if (isInclude) {
           transformedText = autoClose(typedText);
+          queryLength = typedText.length;
         } else {
           const { result } = prefixFreeIdentifiers(typedText, knownLocals);
-          transformedText = result;
+          // If the cursor is right after ${ (empty interpolation), inject ctx. so TypeScript
+          // can resolve completions against the interface instead of returning globals.
+          const injection = result.trimEnd().endsWith('${') ? 'ctx.' : '';
+          transformedText = autoClose(result + injection);
+          queryLength = result.length + injection.length;
         }
 
         const probe = `${virtualTs.slice(0, insertPos)}${transformedText}\n}`;
-        const queryPos = insertPos + transformedText.length;
+        const queryPos = insertPos + queryLength;
         // console.log(probe);
 
         updateVirtualTs(probe);

@@ -296,6 +296,11 @@ function prefixFreeIdentifiers(
       if (isDeclPosition) {
         // This identifier is being declared — register as local, no ctx. prefix
         newLocals.add(ident);
+        identMappings.push({
+          srcStart: srcOffset + i - ident.length,
+          srcEnd: srcOffset + i,
+          dstStart: result.length,
+        });
         lastNonWs = ident.at(-1)!;
         result += ident;
         continue;
@@ -393,17 +398,21 @@ function generateVirtualTs(
     }
 
     // interpolate / raw
-    for (const ident of extractIdentifiers(expr.value)) {
-      // include(...) is a template engine global — not a ctx property
-      const isEngineGlobal = /^include\s*\(/.test(ident);
-      // Variables declared in execute tags (for, const, …) are local — not ctx properties
-      const isLocal = knownLocals.has(ident.split(/[.[(]/)[0]);
-      const line = isEngineGlobal || isLocal ? `${ident};\n` : `ctx.${ident};\n`;
-      const tsStart = virtualTs.length + (isEngineGlobal || isLocal ? 0 : 'ctx.'.length);
-      const tsEnd = tsStart + ident.length;
+    if (expr.value.trim()) {
+      const lineStart = virtualTs.length;
+      const { result, identMappings } = prefixFreeIdentifiers(expr.value.trim(), knownLocals);
+      const r = result.trimEnd();
+      virtualTs += `${result}${r.endsWith(';') ? '' : ';'}\n`;
 
-      virtualTsMappings.push({ exprId: expr.id, tsStart, tsEnd });
-      virtualTs += line;
+      for (const im of identMappings) {
+        virtualTsMappings.push({
+          exprId: expr.id,
+          tsStart: lineStart + im.dstStart,
+          tsEnd: lineStart + im.dstStart + (im.srcEnd - im.srcStart),
+          srcStart: im.srcStart,
+          srcEnd: im.srcEnd,
+        });
+      }
     }
   }
 

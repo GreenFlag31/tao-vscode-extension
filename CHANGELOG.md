@@ -18,5 +18,6 @@
 
 ## [1.0.8]
 
-- Improvements of typescript hovering in execute tags (`if`, `for ... of`).
+- Improvements of typescript hovering and completions.
 - Improvements of providers propositions accuracy (`if`, `for ... of`).
+- Minor performance improvements.

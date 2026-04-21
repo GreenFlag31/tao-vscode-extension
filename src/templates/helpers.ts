@@ -15,7 +15,7 @@ function createTemplatesFilesWatcher() {
   );
 
   templatesFilesWatcher.onDidCreate(getTemplatesFiles);
-  templatesFilesWatcher.onDidChange(getTemplatesFiles);
+  // templatesFilesWatcher.onDidChange(getTemplatesFiles);
   templatesFilesWatcher.onDidDelete(getTemplatesFiles);
 
   return templatesFilesWatcher;

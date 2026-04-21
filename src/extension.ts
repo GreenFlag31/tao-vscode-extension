@@ -46,8 +46,8 @@ async function activate(context: vscode.ExtensionContext) {
         }
       }, 300);
     } else {
-      debounceTimer = setTimeout(() => {
-        handleTypescript(event.document);
+      debounceTimer = setTimeout(async () => {
+        await handleTypescript(event.document);
       }, 300);
     }
   });

@@ -25,46 +25,6 @@ function createFooter(): string {
   return '})(null!);\n';
 }
 
-/**
- * Extracts ctx property accesses from a template interpolate/raw expression value.
- *
- * - Template literals : recurse into ${...} interpolations
- * - Pure literals (string, number, boolean, null, undefined) : ignored
- * - Everything else starting with an identifier or unary operator :
- *   returned as-is so TypeScript validates `ctx.${expr}` naturally
- */
-function extractIdentifiers(value: string): string[] {
-  const trimmed = value.trim();
-  if (!trimmed) return [];
-
-  // Template literal — recurse into ${...} interpolations
-  if (trimmed.startsWith('`')) {
-    const results: string[] = [];
-    const re = /\$\{([^}]+)\}/g;
-    let m: RegExpExecArray | null;
-    while ((m = re.exec(trimmed)) !== null) results.push(...extractIdentifiers(m[1]));
-    return results;
-  }
-
-  // Pure literals — no ctx reference
-  if (
-    /^(['"])[\s\S]*\1$/.test(trimmed) ||
-    /^\d/.test(trimmed) ||
-    trimmed === 'true' ||
-    trimmed === 'false' ||
-    trimmed === 'null' ||
-    trimmed === 'undefined'
-  ) {
-    return [];
-  }
-
-  // Any expression starting with an identifier or unary operator:
-  // returned as-is, TypeScript will validate ctx.${expr} and report errors
-  if (/^[A-Za-z_$!~]/.test(trimmed)) return [trimmed];
-
-  return [];
-}
-
 // ─── Execute tag transformation ───────────────────────────────────────────────
 
 const JS_KEYWORDS = new Set([

@@ -466,6 +466,9 @@ function applyIndentation(
  * @returns         Formatted template string.
  */
 export function format(template: string, options: FormatOptions = {}): string {
+  // Normalize CRLF → LF (windows)
+  template = template.replace(/\r\n/g, '\n');
+
   const definitiveOptions: Required<FormatOptions> = { ...DEFAULTS, ...options };
   const indentUnit =
     definitiveOptions.indentChar === 'tab' ? '\t' : ' '.repeat(definitiveOptions.indentSize);

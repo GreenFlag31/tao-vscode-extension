@@ -233,13 +233,11 @@ function getTsHoverProvider() {
 
         const offsetInValue = hoverOffset - valueStart;
 
-        // For execute tags, each identifier has its own mapping with srcStart/srcEnd.
+        // Each identifier has its own mapping with srcStart/srcEnd.
         // Find the one whose source span covers the current cursor position.
-        // For interpolate/raw, there is one mapping per expression (no srcStart).
         const mapping = virtualTsMappings.find((m) => {
           if (m.exprId !== expr.id) return false;
-          if (m.srcStart === undefined) return true;
-          return offsetInValue >= m.srcStart && offsetInValue < m.srcEnd!;
+          return offsetInValue >= m.srcStart && offsetInValue < m.srcEnd;
         });
 
         if (!mapping) return undefined;
@@ -407,7 +405,7 @@ function getTsCompletionProvider() {
           queryLength = typedText.length;
         } else {
           const { result } = prefixFreeIdentifiers(typedText, knownLocals);
-          // If the cursor is right after ${ (empty interpolation), inject ctx. so TypeScript
+          // In backticks, if the cursor is right after ${ (empty interpolation), inject ctx. so TypeScript
           // can resolve completions against the interface instead of returning globals.
           const injection = result.trimEnd().endsWith('${') ? 'ctx.' : '';
           transformedText = autoClose(result + injection);
